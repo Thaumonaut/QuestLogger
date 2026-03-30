@@ -314,6 +314,9 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   const [exportMsg, setExportMsg] = useState("");
+  const [localImportBanner, setLocalImportBanner] = useState(null); // { count } | null
+  const importEntriesRef = useRef(null);
+  const importProfileRef = useRef(null);
   const [showSettings, setShowSettings] = useState(false);
   const [deepseekKey, setDeepseekKey] = useState("");
   const [rewritingDesc, setRewritingDesc] = useState(false);
@@ -354,6 +357,13 @@ export default function App() {
       setDeepseekKey(settingsRes.data?.deepseek_key ?? "");
       setForm(makeEmptyForm(loadedSettings, loadedTemplates));
       setLoading(false);
+      // Check for old localStorage data from before migration
+      try {
+        const oldEntries = JSON.parse(localStorage.getItem("worklog_entries_v2") || "[]");
+        if (oldEntries.length > 0 && (entriesRes.data ?? []).length === 0) {
+          setLocalImportBanner({ count: oldEntries.length });
+        }
+      } catch {}
     }
     loadData();
   }, [session]);
@@ -950,6 +960,137 @@ export default function App() {
     flash("✓ All data exported");
   }
 
+  // ── localStorage migration ───────────────────────────────────
+  async function importFromLocalStorage() {
+    try {
+      const oldEntries = JSON.parse(localStorage.getItem("worklog_entries_v2") || "[]");
+      const oldTemplates = JSON.parse(localStorage.getItem("worklog_templates_v1") || "[]");
+      const oldSettings = JSON.parse(localStorage.getItem("worklog_settings_v1") || "{}");
+      const oldRate = parseFloat(localStorage.getItem("worklog_hourly_rate") || "0") || 0;
+      const oldKey = localStorage.getItem("worklog_deepseek_key") || "";
+
+      if (oldEntries.length > 0) {
+        const rows = oldEntries.map((e) => ({
+          user_id: session.user.id,
+          date: e.date,
+          start: e.start || null,
+          end_time: e.end || null,
+          description: e.description || "",
+          minutes: e.minutes || 0,
+          breaks: e.breaks || [],
+        }));
+        const { data: inserted } = await supabase.from("entries").insert(rows).select();
+        if (inserted) setEntries((prev) => [...(inserted.map(normalizeEntry)), ...prev].sort((a, b) => b.date.localeCompare(a.date)));
+      }
+
+      if (oldTemplates.length > 0) {
+        const rows = oldTemplates.map((t) => ({
+          user_id: session.user.id,
+          name: t.name,
+          start: t.start || null,
+          end_time: t.end || null,
+          breaks: t.breaks || [],
+        }));
+        const { data: savedTmpl } = await supabase.from("templates").insert(rows).select();
+        if (savedTmpl) setTemplates((prev) => [...prev, ...savedTmpl.map(normalizeTemplate)]);
+      }
+
+      await supabase.from("user_settings").upsert({
+        user_id: session.user.id,
+        name: oldSettings.name || null,
+        default_start: oldSettings.defaultStart || null,
+        default_end: oldSettings.defaultEnd || null,
+        hourly_rate: oldRate,
+        deepseek_key: oldKey,
+        updated_at: new Date().toISOString(),
+      });
+
+      // Clear old keys
+      ["worklog_entries_v2", "worklog_templates_v1", "worklog_settings_v1", "worklog_hourly_rate", "worklog_deepseek_key"].forEach((k) => localStorage.removeItem(k));
+      setLocalImportBanner(null);
+      flash(`✓ Imported ${oldEntries.length} ${oldEntries.length === 1 ? "entry" : "entries"} from local storage`);
+    } catch (e) {
+      flash("✗ Import failed");
+    }
+  }
+
+  // ── Import entries from JSON file ────────────────────────────
+  async function importEntriesFromFile(file) {
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const arr = Array.isArray(parsed) ? parsed : parsed.entries;
+      if (!Array.isArray(arr) || arr.length === 0) { flash("✗ No entries found in file"); return; }
+      const rows = arr.map((e) => ({
+        user_id: session.user.id,
+        date: e.date,
+        start: e.start || null,
+        end_time: e.end || e.end_time || null,
+        description: e.description || "",
+        minutes: typeof e.minutes === "number" ? e.minutes : calcWorked(e.start, e.end || e.end_time, e.breaks),
+        breaks: e.breaks || [],
+      })).filter((e) => e.date && (e.start || e.minutes > 0));
+      const { data: inserted, error } = await supabase.from("entries").insert(rows).select();
+      if (error) { flash("✗ Import failed"); return; }
+      setEntries((prev) => [...(inserted ?? []).map(normalizeEntry), ...prev].sort((a, b) => b.date.localeCompare(a.date)));
+      flash(`✓ Imported ${inserted?.length ?? 0} ${inserted?.length === 1 ? "entry" : "entries"}`);
+    } catch {
+      flash("✗ Invalid file format");
+    }
+  }
+
+  // ── Export / import profile (templates + settings) ───────────
+  function exportProfile() {
+    const profile = {
+      version: 1,
+      type: "questlogger-profile",
+      settings: {
+        name: settings.name || "",
+        defaultStart: settings.defaultStart || "",
+        defaultEnd: settings.defaultEnd || "",
+        hourlyRate,
+      },
+      templates: templates.map(({ name, start, end, breaks }) => ({ name, start, end, breaks })),
+    };
+    const blob = new Blob([JSON.stringify(profile, null, 2)], { type: "application/json" });
+    const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: "questlogger-profile.json" });
+    a.click();
+    flash("✓ Profile exported");
+  }
+
+  function importProfileFromFile(file) {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const profile = JSON.parse(ev.target.result);
+        if (profile.type !== "questlogger-profile") { flash("✗ Not a QuestLogger profile file"); return; }
+        if (profile.settings) {
+          setDraftSettings((d) => ({
+            ...d,
+            name: profile.settings.name || d.name,
+            defaultStart: profile.settings.defaultStart || d.defaultStart,
+            defaultEnd: profile.settings.defaultEnd || d.defaultEnd,
+            hourlyRate: profile.settings.hourlyRate ?? d.hourlyRate,
+          }));
+        }
+        if (Array.isArray(profile.templates) && profile.templates.length > 0) {
+          const imported = profile.templates.map((t) => ({
+            id: Date.now() + Math.random(),
+            name: t.name,
+            start: t.start || "",
+            end: t.end || "",
+            breaks: t.breaks || [],
+          }));
+          setDraftTemplates((prev) => [...prev, ...imported]);
+        }
+        flash(`✓ Profile loaded — review and hit Save`);
+      } catch {
+        flash("✗ Invalid profile file");
+      }
+    };
+    reader.readAsText(file);
+  }
+
   if (authLoading) return (
     <div style={{ fontFamily: "'Figtree', sans-serif", background: "#f8fafc", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;600&display=swap');`}</style>
@@ -999,6 +1140,20 @@ export default function App() {
       </div>
 
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px 64px" }}>
+
+        {/* localStorage migration banner */}
+        {localImportBanner && (
+          <div style={{ background: "#fffbeb", border: "1px solid #fcd34d", borderRadius: 10, padding: "14px 18px", marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "#92400e", margin: 0 }}>Local data found</p>
+              <p style={{ fontSize: 12, color: "#b45309", marginTop: 2 }}>{localImportBanner.count} {localImportBanner.count === 1 ? "entry" : "entries"} saved in this browser before you created an account.</p>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => setLocalImportBanner(null)} style={{ fontSize: 12, color: "#92400e", background: "none", border: "none", cursor: "pointer", padding: "4px 8px", opacity: 0.7 }}>Dismiss</button>
+              <button onClick={importFromLocalStorage} style={{ fontSize: 12, fontWeight: 600, color: "#fff", background: "#d97706", border: "none", borderRadius: 6, cursor: "pointer", padding: "6px 14px" }}>Import to account</button>
+            </div>
+          </div>
+        )}
 
         {/* Log Hours form */}
         <Card className="bg-white border-slate-200 shadow-sm mb-8">
@@ -1554,14 +1709,32 @@ export default function App() {
                 />
               )}
 
+              {/* Data — export/import profile */}
+              <p style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 20, marginBottom: 0 }}>Profile sharing</p>
+              <FieldRow label="Export profile" hint="Templates + settings as JSON">
+                <Button variant="outline" size="sm" onClick={exportProfile} className="h-8 text-xs border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50">
+                  Download profile.json
+                </Button>
+              </FieldRow>
+              <FieldRow label="Import profile" hint="Merges templates into your current list">
+                <Button variant="outline" size="sm" onClick={() => importProfileRef.current?.click()} className="h-8 text-xs border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50">
+                  Load profile.json…
+                </Button>
+              </FieldRow>
+
               <div style={{ height: 16 }} />
             </div>
 
             {/* Modal footer */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 24px 18px", borderTop: "1px solid #f1f5f9", flexShrink: 0 }}>
-              <Button variant="outline" size="sm" onClick={exportAllXLSX} className="h-8 text-xs border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50">
-                Export all data as XLSX
-              </Button>
+              <div style={{ display: "flex", gap: 6 }}>
+                <Button variant="outline" size="sm" onClick={exportAllXLSX} className="h-8 text-xs border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50">
+                  Export all as XLSX
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => importEntriesRef.current?.click()} className="h-8 text-xs border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50">
+                  Import entries…
+                </Button>
+              </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <Button variant="ghost" size="sm" onClick={() => setShowSettings(false)} className="h-9 px-4 text-sm text-slate-500 hover:text-slate-700">Cancel</Button>
                 <Button size="sm" onClick={saveSettings} className="h-9 px-5 text-sm font-semibold" style={{ background: "#0d9488", color: "#fff" }}>Save</Button>
@@ -1570,6 +1743,22 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Hidden file inputs */}
+      <input
+        ref={importEntriesRef}
+        type="file"
+        accept=".json"
+        style={{ display: "none" }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) importEntriesFromFile(f); e.target.value = ""; }}
+      />
+      <input
+        ref={importProfileRef}
+        type="file"
+        accept=".json"
+        style={{ display: "none" }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) importProfileFromFile(f); e.target.value = ""; }}
+      />
     </div>
   );
 }
