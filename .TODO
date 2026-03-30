@@ -1,13 +1,13 @@
 ## Data & Storage
-- Connect to a database for data persistence and multi device support
-- Data backup & restore — export/import all data as JSON (important while still on localStorage)
-- CSV/JSON import — bring in data from other time tracking tools
+- ✅ Connect to a database for data persistence and multi device support
+- ✅ Data backup & restore — export/import all data as JSON
+- ✅ CSV/JSON import — bring in data from other time tracking tools
 
 ## Time Tracking
+- ✅ Reminders — browser notifications to clock out if you forgot, or to clock in at a set time
 - Add a clock in / clock out feature with time rounding
 - Add option for coarse or fine time rounding with 1 min, 5 min, 15 min, and 30 min options
 - Duplicate entry — copy a past session to today with one click
-- Reminders — browser notifications to clock out if you forgot, or to clock in at a set time
 
 ## Projects & Billing
 - Add projects and clients for managing multiple projects and clients
@@ -20,7 +20,7 @@
 - Calendar heatmap view — visualize days worked at a glance, spot gaps
 
 ## UI & Experience
+- ✅ Make the app into a PWA for offline access and push notifications and mobile support
 - Refactor code to break it into smaller, more manageable components
-- Make the app into a PWA for offline access and push notifications and mobile support
 - Dark mode
 - Keyboard shortcuts — e.g. press N to start a new entry, S to save

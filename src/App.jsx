@@ -35,7 +35,29 @@ function normalizeSettings(row) {
     defaultEnd: normalizeTime(row.default_end),
     defaultTemplateId: row.default_template_id || undefined,
     reminderTime: normalizeTime(row.reminder_time),
+    timeRounding: row.time_rounding || "none",
+    dailyTarget: row.daily_target ?? 0,
+    weeklyTarget: row.weekly_target ?? 0,
   };
+}
+
+function roundTimeStr(timeStr, rounding, direction = "nearest") {
+  if (!timeStr || !rounding || rounding === "none") return timeStr;
+  const mins = parseInt(rounding, 10);
+  const [h, m] = timeStr.split(":").map(Number);
+  const total = h * 60 + m;
+  let rounded;
+  if (direction === "down") rounded = Math.floor(total / mins) * mins;
+  else if (direction === "up") rounded = Math.ceil(total / mins) * mins;
+  else rounded = Math.round(total / mins) * mins;
+  const rh = Math.floor(rounded / 60) % 24;
+  const rm = rounded % 60;
+  return `${rh.toString().padStart(2, "0")}:${rm.toString().padStart(2, "0")}`;
+}
+
+function currentTimeStr() {
+  const now = new Date();
+  return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 }
 
 const HOUR_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
@@ -319,6 +341,14 @@ export default function App() {
   const importEntriesRef = useRef(null);
   const importProfileRef = useRef(null);
   const [reminderTime, setReminderTime] = useState("");
+  const [timeRounding, setTimeRounding] = useState("none");
+  const [dailyTarget, setDailyTarget] = useState(0);
+  const [weeklyTarget, setWeeklyTarget] = useState(0);
+  const [clockIn, setClockIn] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("ql_clock_in") || "null"); } catch { return null; }
+  });
+  const [clockedTick, setClockedTick] = useState(0); // triggers elapsed time re-render
+  const logHoursRef = useRef(null);
   const [showSettings, setShowSettings] = useState(false);
   const [deepseekKey, setDeepseekKey] = useState("");
   const [rewritingDesc, setRewritingDesc] = useState(false);
@@ -358,6 +388,9 @@ export default function App() {
       setHourlyRate(settingsRes.data?.hourly_rate ?? 0);
       setDeepseekKey(settingsRes.data?.deepseek_key ?? "");
       setReminderTime(normalizeTime(settingsRes.data?.reminder_time ?? ""));
+      setTimeRounding(settingsRes.data?.time_rounding || "none");
+      setDailyTarget(settingsRes.data?.daily_target ?? 0);
+      setWeeklyTarget(settingsRes.data?.weekly_target ?? 0);
       setForm(makeEmptyForm(loadedSettings, loadedTemplates));
       setLoading(false);
       // Check for old localStorage data from before migration
@@ -400,7 +433,7 @@ export default function App() {
   }, [reminderTime, session, entries]);
 
   function openSettings() {
-    setDraftSettings({ ...settings, hourlyRate: hourlyRate || "", _deepseekKey: deepseekKey, _reminderTime: reminderTime });
+    setDraftSettings({ ...settings, hourlyRate: hourlyRate || "", _deepseekKey: deepseekKey, _reminderTime: reminderTime, _timeRounding: timeRounding, dailyTarget: dailyTarget || "", weeklyTarget: weeklyTarget || "" });
     setDraftTemplates(templates.map((t) => ({ ...t, breaks: [...(t.breaks || [])] })));
     setDraftNewTemplate(null);
     setDraftEditingId(null);
@@ -409,10 +442,13 @@ export default function App() {
   }
 
   async function saveSettings() {
-    const { hourlyRate: draftRate, _deepseekKey: draftKey, _reminderTime: draftReminder, ...rest } = draftSettings;
+    const { hourlyRate: draftRate, _deepseekKey: draftKey, _reminderTime: draftReminder, _timeRounding: draftRounding, dailyTarget: draftDaily, weeklyTarget: draftWeekly, ...rest } = draftSettings;
     const rate = parseFloat(draftRate) || 0;
     const key = (draftKey || "").trim();
     const reminder = draftReminder || null;
+    const rounding = draftRounding || "none";
+    const daily = parseFloat(draftDaily) || 0;
+    const weekly = parseFloat(draftWeekly) || 0;
 
     // Sync templates: delete removed, upsert remaining
     const existingUUIDs = templates.map((t) => t.id).filter(isUUID);
@@ -448,6 +484,9 @@ export default function App() {
       hourly_rate: rate,
       deepseek_key: key,
       reminder_time: reminder,
+      time_rounding: rounding,
+      daily_target: daily,
+      weekly_target: weekly,
       updated_at: new Date().toISOString(),
     });
 
@@ -456,8 +495,88 @@ export default function App() {
     setHourlyRate(rate);
     setDeepseekKey(key);
     setReminderTime(reminder || "");
+    setTimeRounding(rounding);
+    setDailyTarget(daily);
+    setWeeklyTarget(weekly);
     setShowSettings(false);
   }
+
+  // ── Clock in / out ───────────────────────────────────────────
+  useEffect(() => {
+    if (!clockIn) return;
+    const t = setInterval(() => setClockedTick((n) => n + 1), 30_000);
+    return () => clearInterval(t);
+  }, [clockIn]);
+
+  function handleClockIn() {
+    const raw = currentTimeStr();
+    const start = roundTimeStr(raw, timeRounding, "down");
+    const data = { start, date: todayStr() };
+    localStorage.setItem("ql_clock_in", JSON.stringify(data));
+    setClockIn(data);
+  }
+
+  async function handleClockOut() {
+    if (!clockIn) return;
+    const raw = currentTimeStr();
+    const end = roundTimeStr(raw, timeRounding, "up");
+    const minutes = calcWorked(clockIn.start, end, []);
+    const { data } = await supabase.from("entries").insert({
+      user_id: session.user.id,
+      date: clockIn.date,
+      start: clockIn.start,
+      end_time: end,
+      description: "",
+      minutes,
+      breaks: [],
+    }).select().single();
+    if (data) {
+      setEntries((prev) => [normalizeEntry(data), ...prev].sort((a, b) => b.date.localeCompare(a.date)));
+      // Start inline edit so user can add description
+      setInlineEditId(data.id);
+      setInlineForm({ date: data.date, start: normalizeTime(data.start), end: normalizeTime(data.end_time), description: "", breaks: [] });
+      setExpandedDates((prev) => new Set([...prev, data.date]));
+    }
+    localStorage.removeItem("ql_clock_in");
+    setClockIn(null);
+  }
+
+  function clockedElapsed() {
+    if (!clockIn) return "";
+    const [sh, sm] = clockIn.start.split(":").map(Number);
+    const now = new Date();
+    const diff = now.getHours() * 60 + now.getMinutes() - (sh * 60 + sm);
+    if (diff <= 0) return "0m";
+    return diff >= 60 ? `${Math.floor(diff / 60)}h ${diff % 60}m` : `${diff}m`;
+  }
+
+  // ── Duplicate entry ──────────────────────────────────────────
+  function duplicateEntry(entry) {
+    setForm({
+      date: todayStr(),
+      start: entry.start || "",
+      end: entry.end || "",
+      description: entry.description || "",
+      breaks: (entry.breaks || []).map((b) => ({ ...b, id: Date.now() + Math.random() })),
+    });
+    logHoursRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // ── Keyboard shortcuts ───────────────────────────────────────
+  useEffect(() => {
+    function onKey(e) {
+      const tag = document.activeElement?.tagName;
+      const editing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+      if (e.key === "Escape" && inlineEditId) { cancelInlineEdit(); return; }
+      if (editing || showSettings) return;
+      if (e.key === "n" || e.key === "N") {
+        logHoursRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        setTimeout(() => dateInputRef.current?.focus(), 300);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [inlineEditId, showSettings]);
 
   // --- Template draft helpers ---
   function startDraftNew() {
@@ -1235,11 +1354,75 @@ export default function App() {
                 <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 6, fontFamily: "'DM Mono', monospace" }}>{formatDecimal(earningsData.avgMonthMins)} hrs avg</p>
               </div>
             </div>
+            {/* Target hours progress bars */}
+            {(dailyTarget > 0 || weeklyTarget > 0) && (() => {
+              const todayMinsVal = entries.filter((e) => e.date === todayStr()).reduce((a, e) => a + e.minutes, 0);
+              const weekMinsVal = entries.filter((e) => weekStart(e.date) === weekStart(todayStr())).reduce((a, e) => a + e.minutes, 0);
+              return (
+                <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                  {dailyTarget > 0 && (() => {
+                    const pct = Math.min(100, (todayMinsVal / (dailyTarget * 60)) * 100);
+                    const done = todayMinsVal >= dailyTarget * 60;
+                    return (
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: done ? "#0d9488" : "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Daily goal</span>
+                          <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: done ? "#0d9488" : "#64748b" }}>{formatDuration(todayMinsVal)} / {dailyTarget}h {done ? "✓" : `· ${formatDuration(dailyTarget * 60 - todayMinsVal)} left`}</span>
+                        </div>
+                        <div style={{ height: 6, background: "#f1f5f9", borderRadius: 9999, overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: `${pct}%`, background: done ? "#0d9488" : "#2dd4bf", borderRadius: 9999, transition: "width 0.4s" }} />
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {weeklyTarget > 0 && (() => {
+                    const pct = Math.min(100, (weekMinsVal / (weeklyTarget * 60)) * 100);
+                    const done = weekMinsVal >= weeklyTarget * 60;
+                    return (
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: done ? "#0d9488" : "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Weekly goal</span>
+                          <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: done ? "#0d9488" : "#64748b" }}>{formatDuration(weekMinsVal)} / {weeklyTarget}h {done ? "✓" : `· ${formatDuration(weeklyTarget * 60 - weekMinsVal)} left`}</span>
+                        </div>
+                        <div style={{ height: 6, background: "#f1f5f9", borderRadius: 9999, overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: `${pct}%`, background: done ? "#0d9488" : "#2dd4bf", borderRadius: 9999, transition: "width 0.4s" }} />
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
 
+        {/* Clock in / out bar */}
+        <div style={{ background: clockIn ? "linear-gradient(135deg,#f0fdfa,#e6fffa)" : "#fff", border: `1px solid ${clockIn ? "#99f6e4" : "#e2e8f0"}`, borderRadius: 12, padding: "14px 20px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          {clockIn ? (
+            <>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 600, color: "#0d9488", margin: 0 }}>Clocked in since {clockIn.start}{clockIn.date !== todayStr() ? ` (${clockIn.date})` : ""}</p>
+                <p style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Elapsed: {clockedElapsed()}{timeRounding !== "none" ? ` · rounding to ${timeRounding} min` : ""}</p>
+              </div>
+              <Button onClick={handleClockOut} className="h-9 px-5 text-sm font-semibold" style={{ background: "#0d9488", color: "#fff" }}>
+                Clock out
+              </Button>
+            </>
+          ) : (
+            <>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 600, color: "#334155", margin: 0 }}>Ready to start?</p>
+                <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>Clock in to automatically track your start time.{timeRounding !== "none" ? ` Times rounded to ${timeRounding} min.` : ""}</p>
+              </div>
+              <Button variant="outline" onClick={handleClockIn} className="h-9 px-5 text-sm font-semibold border-teal-200 text-teal-700 hover:bg-teal-50">
+                Clock in
+              </Button>
+            </>
+          )}
+        </div>
+
         {/* Log Hours form */}
-        <Card className="bg-white border-slate-200 shadow-sm mb-8">
+        <Card ref={logHoursRef} className="bg-white border-slate-200 shadow-sm mb-8">
           <CardHeader className="px-6 pt-6 pb-2">
             <CardTitle style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", fontFamily: "'Parkinsans', sans-serif" }}>
               Log Hours
@@ -1590,6 +1773,7 @@ export default function App() {
                                       {formatDuration(entry.minutes)}
                                     </span>
                                     <Button variant="ghost" size="sm" onClick={() => startInlineEdit(entry)} className="h-7 px-2 text-xs text-slate-400 hover:text-teal-700 hover:bg-teal-50 shrink-0">Edit</Button>
+                                    <Button variant="ghost" size="sm" onClick={() => duplicateEntry(entry)} className="delete-btn h-7 px-2 text-xs text-slate-300 hover:text-teal-700 hover:bg-teal-50 shrink-0" style={{ opacity: 0, transition: "opacity 0.15s" }} title="Duplicate to today">⧉</Button>
                                     <Button variant="ghost" size="sm" onClick={() => handleDelete(entry.id)} className="delete-btn h-7 w-7 p-0 text-slate-300 hover:text-red-400 hover:bg-red-50 shrink-0" style={{ opacity: 0, transition: "opacity 0.15s" }}>✕</Button>
                                   </div>
                                 );
@@ -1677,6 +1861,33 @@ export default function App() {
                   placeholder="sk-…"
                   className="bg-white border-slate-200 text-slate-700 placeholder:text-slate-300 focus-visible:ring-teal-400/40 focus-visible:ring-2 text-sm shadow-sm h-10 max-w-xs font-mono"
                 />
+              </FieldRow>
+
+              {/* Time tracking */}
+              <p style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 20, marginBottom: 0 }}>Time tracking</p>
+              <FieldRow label="Time rounding" hint="Applied on clock in (round down) and clock out (round up)">
+                <Select value={draftSettings._timeRounding || "none"} onValueChange={(v) => setDraftSettings((d) => ({ ...d, _timeRounding: v }))}>
+                  <SelectTrigger className="bg-white border-slate-200 text-slate-700 h-10 text-sm shadow-sm w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-slate-200 text-slate-700">
+                    {[["none", "No rounding"], ["1", "1 minute"], ["5", "5 minutes"], ["15", "15 minutes"], ["30", "30 minutes"]].map(([v, l]) => (
+                      <SelectItem key={v} value={v} className="focus:bg-teal-50 focus:text-teal-800">{l}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FieldRow>
+              <FieldRow label="Daily goal" hint="Hours target per day">
+                <div className="flex items-center gap-2">
+                  <Input type="number" min="0" max="24" step="0.5" value={draftSettings.dailyTarget ?? ""} onChange={(e) => setDraftSettings((d) => ({ ...d, dailyTarget: e.target.value }))} placeholder="0" className="bg-white border-slate-200 text-slate-700 h-10 text-sm shadow-sm w-24" />
+                  <span style={{ fontSize: 13, color: "#94a3b8" }}>hrs / day</span>
+                </div>
+              </FieldRow>
+              <FieldRow label="Weekly goal" hint="Hours target per week">
+                <div className="flex items-center gap-2">
+                  <Input type="number" min="0" max="168" step="1" value={draftSettings.weeklyTarget ?? ""} onChange={(e) => setDraftSettings((d) => ({ ...d, weeklyTarget: e.target.value }))} placeholder="0" className="bg-white border-slate-200 text-slate-700 h-10 text-sm shadow-sm w-24" />
+                  <span style={{ fontSize: 13, color: "#94a3b8" }}>hrs / week</span>
+                </div>
               </FieldRow>
 
               {/* Defaults */}
