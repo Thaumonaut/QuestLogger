@@ -1,4 +1,6 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { supabase } from "./supabase";
+import AuthPage from "./AuthPage";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,11 +18,24 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-const STORAGE_KEY = "worklog_entries_v2";
-const RATE_KEY = "worklog_hourly_rate";
-const SETTINGS_KEY = "worklog_settings_v1";
-const TEMPLATES_KEY = "worklog_templates_v1";
-const DEEPSEEK_KEY_STORAGE = "worklog_deepseek_key";
+function isUUID(id) {
+  return typeof id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
+function normalizeTime(t) { return t ? t.slice(0, 5) : ""; }
+function normalizeEntry(row) {
+  return { ...row, start: normalizeTime(row.start), end: normalizeTime(row.end_time) };
+}
+function normalizeTemplate(row) {
+  return { ...row, start: normalizeTime(row.start), end: normalizeTime(row.end_time) };
+}
+function normalizeSettings(row) {
+  return {
+    name: row.name || "",
+    defaultStart: normalizeTime(row.default_start),
+    defaultEnd: normalizeTime(row.default_end),
+    defaultTemplateId: row.default_template_id || undefined,
+  };
+}
 
 const HOUR_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
   value: String(i + 1),
@@ -278,29 +293,29 @@ function TemplateEditor({ value, onChange, onAddBreak, onChangeBreak, onRemoveBr
 }
 
 export default function App() {
-  const [entries, setEntries] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
-    catch { return []; }
-  });
-  const [settings, setSettings] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}"); }
-    catch { return {}; }
-  });
-  const [templates, setTemplates] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(TEMPLATES_KEY) || "[]"); }
-    catch { return []; }
-  });
-  const [form, setForm] = useState(() => {
-    try {
-      const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
-      const t = JSON.parse(localStorage.getItem(TEMPLATES_KEY) || "[]");
-      return makeEmptyForm(s, t);
-    } catch { return makeEmptyForm(); }
-  });
+  // ── Auth ────────────────────────────────────────────────────
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthLoading(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // ── App state ────────────────────────────────────────────────
+  const [entries, setEntries] = useState([]);
+  const [settings, setSettings] = useState({});
+  const [templates, setTemplates] = useState([]);
+  const [form, setForm] = useState(() => makeEmptyForm());
+  const [loading, setLoading] = useState(true);
 
   const [exportMsg, setExportMsg] = useState("");
   const [showSettings, setShowSettings] = useState(false);
-  const [deepseekKey, setDeepseekKey] = useState(() => localStorage.getItem(DEEPSEEK_KEY_STORAGE) || "");
+  const [deepseekKey, setDeepseekKey] = useState("");
   const [rewritingDesc, setRewritingDesc] = useState(false);
   const [monthSummaries, setMonthSummaries] = useState({});
 
@@ -316,24 +331,32 @@ export default function App() {
   const [inlineForm, setInlineForm] = useState(null);
   const [sortAsc, setSortAsc] = useState(false);
   const [expandedDates, setExpandedDates] = useState(() => new Set([todayStr()]));
-
-  const [hourlyRate, setHourlyRate] = useState(() => {
-    const stored = localStorage.getItem(RATE_KEY);
-    return stored ? parseFloat(stored) : 0;
-  });
+  const [hourlyRate, setHourlyRate] = useState(0);
   const [earningsPeriod, setEarningsPeriod] = useState("week");
 
-  function persist(updated) {
-    setEntries(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  }
-
-  function persistRate(val) {
-    const n = parseFloat(val);
-    const safe = isNaN(n) || n < 0 ? 0 : n;
-    setHourlyRate(safe);
-    localStorage.setItem(RATE_KEY, String(safe));
-  }
+  // ── Load data when session changes ──────────────────────────
+  useEffect(() => {
+    if (!session) return;
+    async function loadData() {
+      setLoading(true);
+      const [entriesRes, templatesRes, settingsRes] = await Promise.all([
+        supabase.from("entries").select("*").order("date", { ascending: false }),
+        supabase.from("templates").select("*").order("created_at"),
+        supabase.from("user_settings").select("*").single(),
+      ]);
+      const loadedTemplates = (templatesRes.data ?? []).map(normalizeTemplate);
+      const loadedSettings = settingsRes.data ? normalizeSettings(settingsRes.data) : {};
+      const loadedEntries = (entriesRes.data ?? []).map(normalizeEntry);
+      setTemplates(loadedTemplates);
+      setSettings(loadedSettings);
+      setEntries(loadedEntries);
+      setHourlyRate(settingsRes.data?.hourly_rate ?? 0);
+      setDeepseekKey(settingsRes.data?.deepseek_key ?? "");
+      setForm(makeEmptyForm(loadedSettings, loadedTemplates));
+      setLoading(false);
+    }
+    loadData();
+  }, [session]);
 
   function openSettings() {
     setDraftSettings({ ...settings, hourlyRate: hourlyRate || "", _deepseekKey: deepseekKey });
@@ -344,16 +367,51 @@ export default function App() {
     setShowSettings(true);
   }
 
-  function saveSettings() {
+  async function saveSettings() {
     const { hourlyRate: draftRate, _deepseekKey: draftKey, ...rest } = draftSettings;
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(rest));
-    setSettings(rest);
-    persistRate(draftRate);
+    const rate = parseFloat(draftRate) || 0;
     const key = (draftKey || "").trim();
-    localStorage.setItem(DEEPSEEK_KEY_STORAGE, key);
+
+    // Sync templates: delete removed, upsert remaining
+    const existingUUIDs = templates.map((t) => t.id).filter(isUUID);
+    const draftUUIDs = draftTemplates.map((t) => t.id).filter(isUUID);
+    const removed = existingUUIDs.filter((id) => !draftUUIDs.includes(id));
+    if (removed.length) await supabase.from("templates").delete().in("id", removed);
+
+    let finalDefaultTemplateId = rest.defaultTemplateId;
+    if (draftTemplates.length > 0) {
+      const toUpsert = draftTemplates.map((t) => {
+        const obj = { user_id: session.user.id, name: t.name, start: t.start || null, end_time: t.end || null, breaks: t.breaks || [] };
+        if (isUUID(t.id)) obj.id = t.id;
+        return obj;
+      });
+      const { data: saved } = await supabase.from("templates").upsert(toUpsert).select();
+      const normalizedSaved = (saved || []).map(normalizeTemplate);
+      setTemplates(normalizedSaved);
+      // Remap temp defaultTemplateId to real UUID if needed
+      if (finalDefaultTemplateId && !isUUID(finalDefaultTemplateId)) {
+        const idx = draftTemplates.findIndex((t) => String(t.id) === String(finalDefaultTemplateId));
+        finalDefaultTemplateId = idx >= 0 && normalizedSaved[idx] ? normalizedSaved[idx].id : undefined;
+      }
+    } else {
+      setTemplates([]);
+    }
+
+    await supabase.from("user_settings").upsert({
+      user_id: session.user.id,
+      name: rest.name || null,
+      default_start: rest.defaultStart || null,
+      default_end: rest.defaultEnd || null,
+      default_template_id: finalDefaultTemplateId || null,
+      hourly_rate: rate,
+      deepseek_key: key,
+      updated_at: new Date().toISOString(),
+    });
+
+    const newSettings = { ...rest, defaultTemplateId: finalDefaultTemplateId };
+    setSettings(newSettings);
+    setHourlyRate(rate);
     setDeepseekKey(key);
-    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(draftTemplates));
-    setTemplates(draftTemplates);
     setShowSettings(false);
   }
 
@@ -365,8 +423,8 @@ export default function App() {
   }
 
   function commitDraftNew() {
-    const id = Date.now();
-    setDraftTemplates((ts) => [...ts, { ...draftNewTemplate, id }]);
+    const tempId = Date.now(); // temporary client-side ID until saved to Supabase
+    setDraftTemplates((ts) => [...ts, { ...draftNewTemplate, id: tempId }]);
     setDraftNewTemplate(null);
   }
 
@@ -419,10 +477,18 @@ export default function App() {
     setInlineForm({ date: entry.date, start: entry.start, end: entry.end, description: entry.description, breaks: entry.breaks || [] });
   }
   function cancelInlineEdit() { setInlineEditId(null); setInlineForm(null); }
-  function saveInlineEdit() {
+  async function saveInlineEdit() {
     if (!inlineForm || !inlineForm.date || !inlineForm.start || !inlineForm.end) return;
     const minutes = calcWorked(inlineForm.start, inlineForm.end, inlineForm.breaks);
-    persist(entries.map((e) => e.id === inlineEditId ? { ...inlineForm, id: inlineEditId, minutes } : e));
+    await supabase.from("entries").update({
+      date: inlineForm.date,
+      start: inlineForm.start || null,
+      end_time: inlineForm.end || null,
+      description: inlineForm.description || "",
+      minutes,
+      breaks: inlineForm.breaks,
+    }).eq("id", inlineEditId);
+    setEntries((prev) => prev.map((e) => e.id === inlineEditId ? { ...e, ...inlineForm, minutes } : e));
     setInlineEditId(null);
     setInlineForm(null);
   }
@@ -442,14 +508,26 @@ export default function App() {
     });
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!form.date || !form.start || !form.end) return;
     const minutes = calcWorked(form.start, form.end, form.breaks);
-    persist([...entries, { ...form, id: Date.now(), minutes }]);
+    const { data } = await supabase.from("entries").insert({
+      user_id: session.user.id,
+      date: form.date,
+      start: form.start || null,
+      end_time: form.end || null,
+      description: form.description || "",
+      minutes,
+      breaks: form.breaks,
+    }).select().single();
+    if (data) setEntries((prev) => [normalizeEntry(data), ...prev]);
     setForm(makeEmptyForm(settings, templates));
   }
 
-  function handleDelete(id) { persist(entries.filter((e) => e.id !== id)); }
+  async function handleDelete(id) {
+    await supabase.from("entries").delete().eq("id", id);
+    setEntries((prev) => prev.filter((e) => e.id !== id));
+  }
 
   const grouped = useMemo(() => {
     const byDate = {};
@@ -872,6 +950,14 @@ export default function App() {
     flash("✓ All data exported");
   }
 
+  if (authLoading) return (
+    <div style={{ fontFamily: "'Figtree', sans-serif", background: "#f8fafc", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;600&display=swap');`}</style>
+      <span style={{ fontSize: 13, color: "#94a3b8" }}>Loading…</span>
+    </div>
+  );
+  if (!session) return <AuthPage />;
+
   return (
     <div style={{ fontFamily: "'Figtree', sans-serif", background: "#f8fafc", minHeight: "100vh" }}>
       <style>{`
@@ -904,6 +990,9 @@ export default function App() {
             )}
             <Button size="sm" onClick={openSettings} className="h-8 text-xs font-semibold" style={{ background: "#0d9488", color: "#fff" }}>
               Settings
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => supabase.auth.signOut()} className="h-8 text-xs text-slate-400 hover:text-slate-600">
+              Sign out
             </Button>
           </div>
         </div>
@@ -1338,7 +1427,7 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 16px", borderBottom: "1px solid #f1f5f9", flexShrink: 0 }}>
               <div>
                 <p style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", fontFamily: "'Parkinsans', sans-serif", margin: 0 }}>Settings</p>
-                <p style={{ fontSize: 13, color: "#94a3b8", marginTop: 2 }}>Saved in your browser.</p>
+                <p style={{ fontSize: 13, color: "#94a3b8", marginTop: 2 }}>Saved to your account.</p>
               </div>
               <button onClick={() => setShowSettings(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", fontSize: 20, lineHeight: 1, padding: "4px 6px", borderRadius: 6 }} className="hover:text-slate-600">✕</button>
             </div>
@@ -1381,7 +1470,7 @@ export default function App() {
               <FieldRow label="Default template" hint={draftSettings.defaultTemplateId ? "Overrides start & end times" : "Optional — takes priority over times"}>
                 <Select
                   value={draftSettings.defaultTemplateId ? String(draftSettings.defaultTemplateId) : "__none__"}
-                  onValueChange={(v) => setDraftSettings((d) => ({ ...d, defaultTemplateId: v === "__none__" ? undefined : Number(v) }))}
+                  onValueChange={(v) => setDraftSettings((d) => ({ ...d, defaultTemplateId: v === "__none__" ? undefined : v }))}
                 >
                   <SelectTrigger className="bg-white border-slate-200 text-slate-700 hover:border-slate-300 h-10 text-sm shadow-sm w-48">
                     <SelectValue />
