@@ -34,6 +34,7 @@ function normalizeSettings(row) {
     defaultStart: normalizeTime(row.default_start),
     defaultEnd: normalizeTime(row.default_end),
     defaultTemplateId: row.default_template_id || undefined,
+    reminderTime: normalizeTime(row.reminder_time),
   };
 }
 
@@ -317,6 +318,7 @@ export default function App() {
   const [localImportBanner, setLocalImportBanner] = useState(null); // { count } | null
   const importEntriesRef = useRef(null);
   const importProfileRef = useRef(null);
+  const [reminderTime, setReminderTime] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [deepseekKey, setDeepseekKey] = useState("");
   const [rewritingDesc, setRewritingDesc] = useState(false);
@@ -355,6 +357,7 @@ export default function App() {
       setEntries(loadedEntries);
       setHourlyRate(settingsRes.data?.hourly_rate ?? 0);
       setDeepseekKey(settingsRes.data?.deepseek_key ?? "");
+      setReminderTime(normalizeTime(settingsRes.data?.reminder_time ?? ""));
       setForm(makeEmptyForm(loadedSettings, loadedTemplates));
       setLoading(false);
       // Check for old localStorage data from before migration
@@ -368,8 +371,36 @@ export default function App() {
     loadData();
   }, [session]);
 
+  // ── Notification reminder check ──────────────────────────────
+  useEffect(() => {
+    if (!reminderTime || !session) return;
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+    const checkReminder = () => {
+      const now = new Date();
+      const [rh, rm] = reminderTime.split(":").map(Number);
+      const reminderDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), rh, rm, 0);
+      const todayLogged = entries.some((e) => e.date === todayStr());
+      const alreadyNotifiedKey = `ql_notified_${todayStr()}`;
+
+      if (now >= reminderDate && !todayLogged && !localStorage.getItem(alreadyNotifiedKey)) {
+        new Notification("QuestLogger reminder", {
+          body: "You haven't logged any hours today. Tap to open.",
+          icon: "/icon-192.png",
+          badge: "/icon-192.png",
+          tag: "daily-reminder",
+        });
+        localStorage.setItem(alreadyNotifiedKey, "1");
+      }
+    };
+
+    checkReminder();
+    const interval = setInterval(checkReminder, 60_000);
+    return () => clearInterval(interval);
+  }, [reminderTime, session, entries]);
+
   function openSettings() {
-    setDraftSettings({ ...settings, hourlyRate: hourlyRate || "", _deepseekKey: deepseekKey });
+    setDraftSettings({ ...settings, hourlyRate: hourlyRate || "", _deepseekKey: deepseekKey, _reminderTime: reminderTime });
     setDraftTemplates(templates.map((t) => ({ ...t, breaks: [...(t.breaks || [])] })));
     setDraftNewTemplate(null);
     setDraftEditingId(null);
@@ -378,9 +409,10 @@ export default function App() {
   }
 
   async function saveSettings() {
-    const { hourlyRate: draftRate, _deepseekKey: draftKey, ...rest } = draftSettings;
+    const { hourlyRate: draftRate, _deepseekKey: draftKey, _reminderTime: draftReminder, ...rest } = draftSettings;
     const rate = parseFloat(draftRate) || 0;
     const key = (draftKey || "").trim();
+    const reminder = draftReminder || null;
 
     // Sync templates: delete removed, upsert remaining
     const existingUUIDs = templates.map((t) => t.id).filter(isUUID);
@@ -415,6 +447,7 @@ export default function App() {
       default_template_id: finalDefaultTemplateId || null,
       hourly_rate: rate,
       deepseek_key: key,
+      reminder_time: reminder,
       updated_at: new Date().toISOString(),
     });
 
@@ -422,6 +455,7 @@ export default function App() {
     setSettings(newSettings);
     setHourlyRate(rate);
     setDeepseekKey(key);
+    setReminderTime(reminder || "");
     setShowSettings(false);
   }
 
@@ -1155,6 +1189,55 @@ export default function App() {
           </div>
         )}
 
+        {/* Earnings */}
+        <Card className="bg-white border-slate-200 shadow-sm mb-8">
+          <CardHeader className="px-6 pt-6 pb-2">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <CardTitle style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", fontFamily: "'Parkinsans', sans-serif" }}>
+                Earnings
+              </CardTitle>
+              <div style={{ display: "flex", background: "#f1f5f9", borderRadius: 8, padding: 3, gap: 2 }}>
+                {["week", "month"].map((p) => (
+                  <button key={p} onClick={() => setEarningsPeriod(p)} style={{ padding: "4px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "'Parkinsans', sans-serif", background: earningsPeriod === p ? "#fff" : "transparent", color: earningsPeriod === p ? "#0d9488" : "#94a3b8", boxShadow: earningsPeriod === p ? "0 1px 3px rgba(0,0,0,0.08)" : "none", transition: "all 0.15s" }}>
+                    {p === "week" ? "This Week" : "This Month"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="px-6 pb-6 pt-3">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div style={{ background: "linear-gradient(135deg, #f0fdfa, #e6fffa)", border: "1px solid #99f6e4", borderRadius: 12, padding: "16px 18px", gridColumn: "span 2", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <p style={{ fontSize: 11, color: "#0d9488", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
+                    {earningsPeriod === "week" ? "This Week" : "This Month"}
+                  </p>
+                  <p style={{ fontSize: 28, fontWeight: 700, color: "#0d9488", fontFamily: "'DM Mono', monospace", lineHeight: 1 }}>
+                    {hourlyRate > 0 ? formatMoney(earningsData.periodEarnings) : "—"}
+                  </p>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <p style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>Hours worked</p>
+                  <p style={{ fontSize: 20, fontWeight: 600, color: "#334155", fontFamily: "'DM Mono', monospace", lineHeight: 1 }}>
+                    {formatDecimal(earningsData.periodMins)}<span style={{ fontSize: 13, fontWeight: 400, color: "#94a3b8", marginLeft: 4 }}>hrs</span>
+                  </p>
+                  <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 3 }}>{formatDuration(earningsData.periodMins)}</p>
+                </div>
+              </div>
+              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "14px 16px" }}>
+                <p style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Avg / Week</p>
+                <p style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", fontFamily: "'DM Mono', monospace", lineHeight: 1 }}>{hourlyRate > 0 ? formatMoney(earningsData.avgWeekEarnings) : "—"}</p>
+                <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 6, fontFamily: "'DM Mono', monospace" }}>{formatDecimal(earningsData.avgWeekMins)} hrs avg</p>
+              </div>
+              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "14px 16px" }}>
+                <p style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Avg / Month</p>
+                <p style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", fontFamily: "'DM Mono', monospace", lineHeight: 1 }}>{hourlyRate > 0 ? formatMoney(earningsData.avgMonthEarnings) : "—"}</p>
+                <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 6, fontFamily: "'DM Mono', monospace" }}>{formatDecimal(earningsData.avgMonthMins)} hrs avg</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Log Hours form */}
         <Card className="bg-white border-slate-200 shadow-sm mb-8">
           <CardHeader className="px-6 pt-6 pb-2">
@@ -1316,55 +1399,6 @@ export default function App() {
               <Button onClick={handleSubmit} disabled={!form.date || !form.start || !form.end} className="h-9 px-5 text-sm font-semibold disabled:opacity-40" style={{ background: "#0d9488", color: "#fff" }}>
                 Log Hours
               </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Earnings */}
-        <Card className="bg-white border-slate-200 shadow-sm mb-8">
-          <CardHeader className="px-6 pt-6 pb-2">
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <CardTitle style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", fontFamily: "'Parkinsans', sans-serif" }}>
-                Earnings
-              </CardTitle>
-              <div style={{ display: "flex", background: "#f1f5f9", borderRadius: 8, padding: 3, gap: 2 }}>
-                {["week", "month"].map((p) => (
-                  <button key={p} onClick={() => setEarningsPeriod(p)} style={{ padding: "4px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "'Parkinsans', sans-serif", background: earningsPeriod === p ? "#fff" : "transparent", color: earningsPeriod === p ? "#0d9488" : "#94a3b8", boxShadow: earningsPeriod === p ? "0 1px 3px rgba(0,0,0,0.08)" : "none", transition: "all 0.15s" }}>
-                    {p === "week" ? "This Week" : "This Month"}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="px-6 pb-6 pt-3">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div style={{ background: "linear-gradient(135deg, #f0fdfa, #e6fffa)", border: "1px solid #99f6e4", borderRadius: 12, padding: "16px 18px", gridColumn: "span 2", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div>
-                  <p style={{ fontSize: 11, color: "#0d9488", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
-                    {earningsPeriod === "week" ? "This Week" : "This Month"}
-                  </p>
-                  <p style={{ fontSize: 28, fontWeight: 700, color: "#0d9488", fontFamily: "'DM Mono', monospace", lineHeight: 1 }}>
-                    {hourlyRate > 0 ? formatMoney(earningsData.periodEarnings) : "—"}
-                  </p>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <p style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>Hours worked</p>
-                  <p style={{ fontSize: 20, fontWeight: 600, color: "#334155", fontFamily: "'DM Mono', monospace", lineHeight: 1 }}>
-                    {formatDecimal(earningsData.periodMins)}<span style={{ fontSize: 13, fontWeight: 400, color: "#94a3b8", marginLeft: 4 }}>hrs</span>
-                  </p>
-                  <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 3 }}>{formatDuration(earningsData.periodMins)}</p>
-                </div>
-              </div>
-              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "14px 16px" }}>
-                <p style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Avg / Week</p>
-                <p style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", fontFamily: "'DM Mono', monospace", lineHeight: 1 }}>{hourlyRate > 0 ? formatMoney(earningsData.avgWeekEarnings) : "—"}</p>
-                <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 6, fontFamily: "'DM Mono', monospace" }}>{formatDecimal(earningsData.avgWeekMins)} hrs avg</p>
-              </div>
-              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "14px 16px" }}>
-                <p style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Avg / Month</p>
-                <p style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", fontFamily: "'DM Mono', monospace", lineHeight: 1 }}>{hourlyRate > 0 ? formatMoney(earningsData.avgMonthEarnings) : "—"}</p>
-                <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 6, fontFamily: "'DM Mono', monospace" }}>{formatDecimal(earningsData.avgMonthMins)} hrs avg</p>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -1605,6 +1639,31 @@ export default function App() {
                   <span style={{ fontSize: 14, color: "#64748b" }}>$</span>
                   <Input type="number" min="0" step="0.01" value={draftSettings.hourlyRate ?? ""} onChange={(e) => setDraftSettings((d) => ({ ...d, hourlyRate: e.target.value }))} placeholder="0.00" className="bg-white border-slate-200 text-slate-700 placeholder:text-slate-300 focus-visible:ring-teal-400/40 focus-visible:ring-2 text-sm shadow-sm h-10 w-28" />
                   <span style={{ fontSize: 13, color: "#94a3b8" }}>/hr</span>
+                </div>
+              </FieldRow>
+
+              {/* Notifications */}
+              <p style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 20, marginBottom: 0 }}>Notifications</p>
+              <FieldRow label="Daily reminder" hint="Notifies you if no hours logged by this time">
+                <div className="flex items-center gap-3">
+                  <TimeSelect
+                    value={draftSettings._reminderTime || ""}
+                    onChange={(v) => setDraftSettings((d) => ({ ...d, _reminderTime: v }))}
+                  />
+                  {draftSettings._reminderTime && (
+                    <button onClick={() => setDraftSettings((d) => ({ ...d, _reminderTime: "" }))} style={{ fontSize: 12, color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }} className="hover:text-red-400">Clear</button>
+                  )}
+                  {"Notification" in window && Notification.permission !== "granted" && (
+                    <button
+                      onClick={() => Notification.requestPermission()}
+                      style={{ fontSize: 12, color: "#0d9488", background: "#f0fdfa", border: "1px solid #99f6e4", borderRadius: 6, cursor: "pointer", padding: "4px 10px", fontWeight: 500 }}
+                    >
+                      Allow notifications
+                    </button>
+                  )}
+                  {"Notification" in window && Notification.permission === "granted" && (
+                    <span style={{ fontSize: 11, color: "#22c55e" }}>✓ Allowed</span>
+                  )}
                 </div>
               </FieldRow>
 
