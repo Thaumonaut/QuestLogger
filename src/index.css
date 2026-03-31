@@ -1,3 +1,104 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Light mode ──────────────────────────────────────────────── */
+:root {
+  --color-bg: #f5f7ff;
+  --color-surface: #ffffff;
+  --color-surface-raised: #eef1ff;
+  --color-border: #dce3fa;
+  --color-border-light: #eef1ff;
+  --color-text: #0f0d2e;
+  --color-text-secondary: #2e2b6b;
+  --color-muted: #8a8dba;
+  --color-secondary: #5a5d99;
+  --color-accent: #4f6af5;
+  --color-accent-hover: #3a54e0;
+  --color-accent-light: #eef2ff;
+  --color-accent-light-hover: #e0e7ff;
+  --color-accent-border: #c7d2fe;
+  --color-accent-text: #312e81;
+  --color-accent-bright: #818cf8;
+  --color-nav: #ffffff;
+  --color-nav-border: #dce3fa;
+  --color-modal: #ffffff;
+  --color-modal-overlay: rgba(15, 13, 46, 0.4);
+  --color-input-bg: #ffffff;
+  --color-tag-bg: #eef1ff;
+  --color-tag-text: #5a5d99;
+  --color-danger: #ef4444;
+  --color-danger-bg: #fef2f2;
+  --color-warn-bg: #fffbeb;
+  --color-warn-border: #fcd34d;
+  --color-warn-text: #92400e;
+  --color-warn-muted: #b45309;
+  --color-success: #22c55e;
+}
+
+/* ── Dark mode — luxury glass ────────────────────────────────── */
+.dark {
+  --color-bg: #05060f;
+  --color-surface: rgba(14, 18, 50, 0.65);
+  --color-surface-raised: rgba(5, 6, 15, 0.8);
+  --color-border: rgba(129, 140, 248, 0.12);
+  --color-border-light: rgba(129, 140, 248, 0.06);
+  --color-text: #f0f0ff;
+  --color-text-secondary: rgba(224, 226, 255, 0.7);
+  --color-muted: rgba(170, 175, 220, 0.35);
+  --color-secondary: rgba(190, 196, 235, 0.55);
+  --color-accent: #818cf8;
+  --color-accent-hover: #a5b0ff;
+  --color-accent-light: rgba(79, 106, 245, 0.12);
+  --color-accent-light-hover: rgba(79, 106, 245, 0.2);
+  --color-accent-border: rgba(129, 140, 248, 0.3);
+  --color-accent-text: #c7d2fe;
+  --color-accent-bright: #6470f0;
+  --color-nav: rgba(8, 9, 24, 0.75);
+  --color-nav-border: rgba(129, 140, 248, 0.1);
+  --color-modal: rgba(10, 12, 32, 0.92);
+  --color-modal-overlay: rgba(0, 0, 10, 0.85);
+  --color-input-bg: rgba(5, 6, 18, 0.8);
+  --color-tag-bg: rgba(79, 106, 245, 0.1);
+  --color-tag-text: rgba(190, 196, 235, 0.7);
+  --color-danger: #f87171;
+  --color-danger-bg: rgba(69, 10, 10, 0.6);
+  --color-warn-bg: rgba(28, 18, 7, 0.7);
+  --color-warn-border: rgba(120, 53, 15, 0.6);
+  --color-warn-text: #fef3c7;
+  --color-warn-muted: #fde68a;
+  --color-success: #4ade80;
+}
+
+/* ── Dark mode — aurora background ──────────────────────────── */
+html.dark body {
+  background-color: #05060f;
+  background-image:
+    radial-gradient(ellipse 70% 50% at 15% -5%,  rgba(79, 106, 245, 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 110%, rgba(129, 140, 248, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 35% 35% at 60%  40%, rgba(100, 112, 240, 0.06) 0%, transparent 65%);
+  min-height: 100vh;
+}
+
+/* ── Dark mode — glass card surfaces ────────────────────────── */
+html.dark .shadow-sm {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 1px 0 rgba(129, 140, 248, 0.08),
+              0 8px 40px rgba(0, 0, 10, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ── Dark mode — sticky nav glass ───────────────────────────── */
+html.dark nav,
+html.dark [data-nav] {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* ── Animations ──────────────────────────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Entry row hover ─────────────────────────────────────────── */
+.entry-row:hover { background: var(--color-accent-light); }
+.entry-row:hover .delete-btn { opacity: 1 !important; }
