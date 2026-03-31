@@ -5,22 +5,22 @@
 
 ## Time Tracking
 - ✅ Reminders — browser notifications to clock out if you forgot, or to clock in at a set time
-- Add a clock in / clock out feature with time rounding
-- Add option for coarse or fine time rounding with 1 min, 5 min, 15 min, and 30 min options
-- Duplicate entry — copy a past session to today with one click
+- ✅ Add a clock in / clock out feature with time rounding
+- ✅ Add option for coarse or fine time rounding with 1 min, 5 min, 15 min, and 30 min options
+- ✅ Duplicate entry — copy a past session to today with one click
 
 ## Projects & Billing
-- Add projects and clients for managing multiple projects and clients
-- Billable vs non-billable flag per entry, with totals separated in exports and earnings
-- Invoice generation — produce a printable/PDF invoice from a month or project's hours
+- ✅ Add projects and clients for managing multiple projects and clients
+- ✅ Billable vs non-billable flag per entry, with totals separated in exports and earnings
+- ✅ Invoice generation — produce a printable/PDF invoice from a month or project's hours
 - Multi-currency support for the hourly rate
 
 ## Goals & Insights
-- Target hours — set a daily or weekly goal and show a progress bar / how many hours remain
-- Calendar heatmap view — visualize days worked at a glance, spot gaps
+- ✅ Target hours — set a daily or weekly goal and show a progress bar / how many hours remain
+- ✅ Calendar heatmap view — visualize days worked at a glance, spot gaps
 
 ## UI & Experience
 - ✅ Make the app into a PWA for offline access and push notifications and mobile support
-- Refactor code to break it into smaller, more manageable components
-- Dark mode
-- Keyboard shortcuts — e.g. press N to start a new entry, S to save
+- ✅ Keyboard shortcuts — N jumps to Log Hours form, Esc cancels inline edit
+- ✅ Refactor code to break it into smaller, more manageable components
+- ✅ Dark mode
