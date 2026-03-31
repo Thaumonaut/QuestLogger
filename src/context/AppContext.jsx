@@ -460,15 +460,17 @@ export function AppProvider({ session, children }) {
     return data.choices[0].message.content.trim();
   }
 
-  async function rewriteDescription() {
-    if (!form.description.trim() || !deepseekKey) return;
+  async function rewriteDescription(text, setter) {
+    const src = text !== undefined ? text : form.description;
+    const set = setter || ((v) => setField("description", v));
+    if (!src.trim() || !deepseekKey) return;
     setRewritingDesc(true);
     try {
       const result = await callDeepSeek(
         "You are a professional business writer. Rewrite work log descriptions into concise, professional client-facing language. Keep it to 1–2 sentences. Do not invent details not present in the original.",
-        `Rewrite this work description professionally: "${form.description}"`,
+        `Rewrite this work description professionally: "${src}"`,
       );
-      setField("description", result);
+      set(result);
     } catch { flash("✗ AI rewrite failed"); }
     finally { setRewritingDesc(false); }
   }

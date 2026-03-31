@@ -1,3 +1,4 @@
+import { useRef, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import { useTheme } from "../context/ThemeContext";
 import TimeSelect from "./TimeSelect";
@@ -24,7 +25,16 @@ export default function EntryRow({ entry, index }) {
     addInlineBreak, updateInlineBreak, removeInlineBreak,
     handleDelete, duplicateEntry,
     hourlyRate, projects,
+    deepseekKey, rewriteDescription, rewritingDesc,
   } = useApp();
+
+  const descRef = useRef(null);
+  useEffect(() => {
+    const el = descRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [inlineForm?.description]);
 
   const { theme } = useTheme();
   const dark = theme === "dark";
@@ -71,14 +81,32 @@ export default function EntryRow({ entry, index }) {
         </div>
 
         <div className="mb-4">
-          <label className={`block text-xs font-medium mb-1.5 uppercase tracking-wide hidden ${dark ? "text-slate-500" : "text-slate-500"}`}>Description</label>
           <Textarea
+            ref={descRef}
             value={inlineForm.description}
-            onChange={(e) => setInlineField("description", e.target.value)}
+            onChange={(e) => {
+              setInlineField("description", e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = e.target.scrollHeight + "px";
+            }}
             placeholder="Description…"
-            rows={2}
-            className={`${inputClass} resize-none`}
+            className={`${inputClass} resize-none overflow-hidden min-h-[80px]`}
           />
+          {deepseekKey && (
+            <button
+              onClick={() => rewriteDescription(inlineForm.description, (v) => setInlineField("description", v))}
+              disabled={rewritingDesc || !inlineForm.description?.trim()}
+              className={`mt-1.5 flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                dark
+                  ? "bg-slate-800/80 border-slate-700 text-cyan-400 hover:enabled:bg-slate-700 hover:enabled:border-cyan-500/50"
+                  : "bg-white/80 border-slate-200 text-teal-600 hover:enabled:bg-slate-50 hover:enabled:border-teal-300"
+              }`}
+            >
+              {rewritingDesc ? (
+                <><span className="w-2 h-2 rounded-full border border-current border-t-transparent animate-spin" /> Rewriting</>
+              ) : "✦ Rewrite"}
+            </button>
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">

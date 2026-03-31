@@ -9,8 +9,8 @@ export default defineConfig({
     tailwindcss(),
     react(),
     VitePWA({
-      registerType: "autoUpdate",
-      includeAssets: ["apple-touch-icon.png", "icon-192.png", "icon-512.png"],
+      registerType: "prompt",
+      includeAssets: ["favicon.ico", "logo.svg", "apple-touch-icon-180x180.png"],
       manifest: {
         name: "QuestLogger",
         short_name: "QuestLogger",
@@ -22,11 +22,15 @@ export default defineConfig({
         scope: "/",
         start_url: "/",
         icons: [
-          { src: "icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: "icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+          { src: "pwa-64x64.png", sizes: "64x64", type: "image/png" },
+          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png" },
+          { src: "maskable-icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         cleanupOutdatedCaches: true,
         globPatterns: ["**/*.{js,css,png,svg,ico}"],
         navigateFallback: "index.html",

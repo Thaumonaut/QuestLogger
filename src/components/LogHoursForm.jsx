@@ -26,6 +26,23 @@ export default function LogHoursForm() {
 
   const [mode, setMode] = useState("manual");
 
+  const manualDescRef = useRef(null);
+  const clockDescRef = useRef(null);
+
+  useEffect(() => {
+    const el = manualDescRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [form.description]);
+
+  useEffect(() => {
+    const el = clockDescRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [clockIn?.description]);
+
   useEffect(() => {
     if (clockIn) setMode("auto");
   }, [clockIn]);
@@ -167,13 +184,34 @@ export default function LogHoursForm() {
                       <h3 className={`font-semibold ${dark ? "text-white" : "text-slate-800"}`}>Details</h3>
                     </div>
                     <div className="space-y-3">
-                      <Textarea
-                        value={clockIn.description || ""}
-                        onChange={(e) => updateClockIn({ description: e.target.value })}
-                        placeholder="What are you working on?"
-                        rows={2}
-                        className={`${inputClass} resize-none min-h-[50px]`}
-                      />
+                      <div>
+                        <Textarea
+                          ref={clockDescRef}
+                          value={clockIn.description || ""}
+                          onChange={(e) => {
+                            updateClockIn({ description: e.target.value });
+                            e.target.style.height = "auto";
+                            e.target.style.height = e.target.scrollHeight + "px";
+                          }}
+                          placeholder="What are you working on?"
+                          className={`${inputClass} resize-none overflow-hidden min-h-[80px]`}
+                        />
+                        {deepseekKey && (
+                          <button
+                            onClick={() => rewriteDescription(clockIn.description, (v) => updateClockIn({ description: v }))}
+                            disabled={rewritingDesc || !clockIn.description?.trim()}
+                            className={`mt-1.5 flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                              dark
+                                ? "bg-slate-800/80 border-slate-700 text-cyan-400 hover:enabled:bg-slate-700 hover:enabled:border-cyan-500/50"
+                                : "bg-white/80 border-slate-200 text-teal-600 hover:enabled:bg-slate-50 hover:enabled:border-teal-300"
+                            }`}
+                          >
+                            {rewritingDesc ? (
+                              <><span className="w-2 h-2 rounded-full border border-current border-t-transparent animate-spin" /> Rewriting</>
+                            ) : "✦ Rewrite"}
+                          </button>
+                        )}
+                      </div>
                       {projects.length > 0 && (
                         <Select
                           value={clockIn.projectId ? String(clockIn.projectId) : "__none__"}
@@ -352,24 +390,27 @@ export default function LogHoursForm() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="relative">
-                    <label className={`block text-xs font-medium mb-1.5 uppercase tracking-wide hidden ${dark ? "text-slate-500" : "text-slate-500"}`}>Description</label>
+                  <div>
                     <Textarea
+                      ref={manualDescRef}
                       value={form.description}
-                      onChange={(e) => setField("description", e.target.value)}
+                      onChange={(e) => {
+                        setField("description", e.target.value);
+                        e.target.style.height = "auto";
+                        e.target.style.height = e.target.scrollHeight + "px";
+                      }}
                       placeholder="What did you work on?"
-                      rows={3}
-                      className={`${inputClass} resize-none min-h-[auto]`}
+                      className={`${inputClass} resize-none overflow-hidden min-h-[80px]`}
                     />
-                    {deepseekKey && form.description.trim() && (
+                    {deepseekKey && (
                       <button
-                        onClick={rewriteDescription}
-                        disabled={rewritingDesc}
-                        className={`absolute bottom-2 right-2 flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border transition-all ${
+                        onClick={() => rewriteDescription()}
+                        disabled={rewritingDesc || !form.description.trim()}
+                        className={`mt-1.5 flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                           dark
-                            ? "bg-slate-800/80 border-slate-700 text-cyan-400 hover:bg-slate-700 hover:border-cyan-500/50"
-                            : "bg-white/80 border-slate-200 text-teal-600 hover:bg-slate-50 hover:border-teal-300"
-                        } ${rewritingDesc ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                            ? "bg-slate-800/80 border-slate-700 text-cyan-400 hover:enabled:bg-slate-700 hover:enabled:border-cyan-500/50"
+                            : "bg-white/80 border-slate-200 text-teal-600 hover:enabled:bg-slate-50 hover:enabled:border-teal-300"
+                        }`}
                       >
                         {rewritingDesc ? (
                           <><span className="w-2 h-2 rounded-full border border-current border-t-transparent animate-spin" /> Rewriting</>
