@@ -928,35 +928,139 @@ export function AppProvider({ session, children }) {
       connectGoogleSheets();
       return;
     }
+
+    const hasRate = hourlyRate > 0;
+    const projectMap = new Map(projects.map((p) => [p.id, p]));
     const monthDate = new Date(monthStr + "-01");
     const monthLabel = monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
     const title = `QuestLogger${settings.name ? ` — ${settings.name}` : ""} — ${monthLabel}`;
+    const numCols = hasRate ? 11 : 9;
 
-    const headers = ["Date", "Day", "Project", "Description", "Start", "End", "Duration (h)", "Break (min)", "Billable", "Earnings"];
-    const dataRows = [...monthEntries]
-      .sort((a, b) => a.date.localeCompare(b.date) || (a.start || "").localeCompare(b.start || ""))
-      .map((e) => {
-        const proj = (e.project_ids || []).map((id) => projects.find((p) => p.id === id)).filter(Boolean);
-        const dayName = new Date(e.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short" });
-        const breakMins = unpaidBreakMins(e);
-        const billable = e.billable !== false;
-        const earnings = billable && hourlyRate > 0 ? Math.round((e.minutes / 60) * hourlyRate * 100) / 100 : "";
-        return [e.date, dayName, proj.map((p) => p.name).join(", "), e.description || "", toDisplayTime(e.start), toDisplayTime(e.end), Math.round(e.minutes / 60 * 100) / 100, breakMins, billable ? "Yes" : "No", earnings];
-      });
+    // Sheets API colors: {red, green, blue} 0-1
+    const NAVY = { red: 0.122, green: 0.220, blue: 0.392 };
+    const BLUE = { red: 0.267, green: 0.447, blue: 0.769 };
+    const LIGHT = { red: 0.941, green: 0.957, blue: 0.980 };
+    const WHITE = { red: 1, green: 1, blue: 1 };
 
-    const toCell = (cell) => typeof cell === "number"
-      ? { userEnteredValue: { numberValue: cell } }
-      : { userEnteredValue: { stringValue: String(cell ?? "") } };
+    const navyFmt = { backgroundColor: NAVY, textFormat: { foregroundColor: WHITE, bold: true, fontSize: 11, fontFamily: "Arial" }, verticalAlignment: "MIDDLE" };
+    const blueFmt = { backgroundColor: BLUE, textFormat: { foregroundColor: WHITE, bold: true, fontSize: 11, fontFamily: "Arial" }, verticalAlignment: "MIDDLE" };
+    const lightFmt = { backgroundColor: LIGHT, textFormat: { bold: true, fontSize: 11, fontFamily: "Arial" }, verticalAlignment: "MIDDLE" };
+    const baseFmt = { textFormat: { fontSize: 11, fontFamily: "Arial" }, verticalAlignment: "MIDDLE" };
+    const boldFmt = { textFormat: { bold: true, fontSize: 11, fontFamily: "Arial" }, verticalAlignment: "MIDDLE" };
 
+    const cell = (value, fmt) => {
+      const v = typeof value === "number"
+        ? { userEnteredValue: { numberValue: value } }
+        : { userEnteredValue: { stringValue: String(value ?? "") } };
+      if (fmt) v.userEnteredFormat = fmt;
+      return v;
+    };
+    const empty = (fmt) => cell("", fmt);
+    const blankRow = () => ({ values: Array(numCols).fill(null).map(() => empty()) });
+
+    const rowData = [];
+
+    // ── Title row ──
+    rowData.push({ values: Array(numCols).fill(null).map((_, i) => i === 0
+      ? cell(title, { textFormat: { bold: true, fontSize: 14, fontFamily: "Arial" }, horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE" })
+      : empty()
+    )});
+
+    // ── Info rows ──
+    const addInfo = (label, value) => {
+      rowData.push({ values: Array(numCols).fill(null).map((_, i) =>
+        i === 0 ? cell(label, blueFmt) : i === 1 ? cell(value, blueFmt) : empty(blueFmt)
+      )});
+    };
+    if (settings.name) addInfo("Name:", settings.name);
+    addInfo("Period:", monthLabel);
+    if (hasRate) addInfo("Hourly Rate:", `$${hourlyRate.toFixed(2)}`);
+
+    rowData.push(blankRow());
+
+    // ── Header row (record its index for freezing) ──
+    const headerRowIndex = rowData.length;
+    const headerLabels = hasRate
+      ? ["Date", "Start", "End", "Project", "Billable", "Break (min)", "Income", "Hours", "Description", "Total Income", "Total Hours"]
+      : ["Date", "Start", "End", "Project", "Billable", "Break (min)", "Hours", "Description", "Total Hours"];
+    rowData.push({ values: headerLabels.map((h) => cell(h, navyFmt)) });
+
+    // ── Group entries by week → day ──
+    const sorted = [...monthEntries].sort((a, b) => a.date.localeCompare(b.date));
+    const weekMap = new Map();
+    for (const e of sorted) {
+      const wk = weekStart(e.date);
+      if (!weekMap.has(wk)) weekMap.set(wk, new Map());
+      const dayMap = weekMap.get(wk);
+      if (!dayMap.has(e.date)) dayMap.set(e.date, []);
+      dayMap.get(e.date).push(e);
+    }
+
+    let grandMins = 0, grandEarned = 0;
+
+    for (const [wkStr, dayMap] of weekMap) {
+      let weekMins = 0, weekEarned = 0;
+      for (const dayEntries of dayMap.values()) {
+        for (const e of dayEntries) {
+          weekMins += e.minutes;
+          if (hasRate && e.billable !== false) weekEarned += (e.minutes / 60) * hourlyRate;
+        }
+      }
+
+      // Week row
+      rowData.push({ values: Array(numCols).fill(null).map((_, i) => {
+        if (i === 0) return cell(weekRangeLabel(wkStr), navyFmt);
+        if (hasRate && i === numCols - 2) return cell(formatMoney(weekEarned), navyFmt);
+        if (i === numCols - 1) return cell(formatDuration(weekMins), navyFmt);
+        return empty(navyFmt);
+      })});
+
+      for (const [date, dayEntries] of dayMap) {
+        const dayMins = dayEntries.reduce((a, e) => a + e.minutes, 0);
+        const dayEarned = hasRate ? dayEntries.reduce((a, e) => a + (e.billable !== false ? (e.minutes / 60) * hourlyRate : 0), 0) : 0;
+        const dayLabel = new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+
+        // Day row
+        rowData.push({ values: Array(numCols).fill(null).map((_, i) => {
+          if (i === 0) return cell(dayLabel, lightFmt);
+          if (hasRate && i === numCols - 2) return cell(formatMoney(dayEarned), lightFmt);
+          if (i === numCols - 1) return cell(formatDuration(dayMins), lightFmt);
+          return empty(lightFmt);
+        })});
+
+        // Entry rows
+        for (const e of dayEntries) {
+          const bm = unpaidBreakMins(e);
+          const projectName = (e.project_ids || []).map((id) => projectMap.get(id)?.name).filter(Boolean).join(", ");
+          const earned = hasRate && e.billable !== false ? formatMoney((e.minutes / 60) * hourlyRate) : "";
+          const entryCells = hasRate
+            ? [empty(baseFmt), cell(toDisplayTime(e.start), baseFmt), cell(toDisplayTime(e.end), baseFmt), cell(projectName, baseFmt), cell(e.billable === false ? "No" : "Yes", baseFmt), cell(bm > 0 ? bm : "", baseFmt), cell(earned, baseFmt), cell(formatDuration(e.minutes), baseFmt), cell(e.description || "", baseFmt), empty(baseFmt), empty(baseFmt)]
+            : [empty(baseFmt), cell(toDisplayTime(e.start), baseFmt), cell(toDisplayTime(e.end), baseFmt), cell(projectName, baseFmt), cell(e.billable === false ? "No" : "Yes", baseFmt), cell(bm > 0 ? bm : "", baseFmt), cell(formatDuration(e.minutes), baseFmt), cell(e.description || "", baseFmt), empty(baseFmt)];
+          rowData.push({ values: entryCells });
+        }
+
+        grandMins += dayMins;
+        grandEarned += dayEarned;
+      }
+
+      rowData.push(blankRow());
+    }
+
+    // ── Total row ──
+    rowData.push({ values: Array(numCols).fill(null).map((_, i) => {
+      if (i === 0) return cell("TOTAL", boldFmt);
+      if (hasRate && i === numCols - 2) return cell(formatMoney(grandEarned), boldFmt);
+      if (i === numCols - 1) return cell(formatDuration(grandMins), boldFmt);
+      return empty(boldFmt);
+    })});
+
+    // ── Create spreadsheet ──
     const res = await fetch("https://sheets.googleapis.com/v4/spreadsheets", {
       method: "POST",
       headers: { "Authorization": `Bearer ${googleToken}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         properties: { title },
-        sheets: [{
-          properties: { title: "Entries" },
-          data: [{ startRow: 0, startColumn: 0, rowData: [headers, ...dataRows].map((row) => ({ values: row.map(toCell) })) }],
-        }],
+        sheets: [{ properties: { title: "Timesheet" }, data: [{ startRow: 0, startColumn: 0, rowData }] }],
       }),
     });
 
@@ -966,8 +1070,23 @@ export function AppProvider({ session, children }) {
       flash("✗ Google Sheets export failed");
       return;
     }
-    const data = await res.json();
-    window.open(data.spreadsheetUrl, "_blank");
+    const created = await res.json();
+    const spreadsheetId = created.spreadsheetId;
+    const sheetId = created.sheets[0].properties.sheetId;
+
+    // ── batchUpdate: merge title, freeze header, set column widths ──
+    const colWidths = hasRate ? [160, 80, 80, 140, 70, 100, 100, 80, 260, 120, 120] : [160, 80, 80, 140, 70, 100, 80, 260, 120];
+    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${googleToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ requests: [
+        { mergeCells: { range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: numCols }, mergeType: "MERGE_ALL" } },
+        { updateSheetProperties: { properties: { sheetId, gridProperties: { frozenRowCount: headerRowIndex + 1 } }, fields: "gridProperties.frozenRowCount" } },
+        ...colWidths.map((pixelSize, i) => ({ updateDimensionProperties: { range: { sheetId, dimension: "COLUMNS", startIndex: i, endIndex: i + 1 }, properties: { pixelSize }, fields: "pixelSize" } })),
+      ]}),
+    }).catch(() => {}); // best-effort — sheet is already created
+
+    window.open(created.spreadsheetUrl, "_blank");
     flash("✓ Opened in Google Sheets");
   }
 
