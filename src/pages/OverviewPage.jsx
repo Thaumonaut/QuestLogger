@@ -232,7 +232,7 @@ export default function OverviewPage() {
       </div>
 
       {/* ── Stat Cards ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-8 hidden">
         {/* Earnings */}
         <div
           className={`${statCardClasses} ${
