@@ -175,7 +175,7 @@ export default function InvoiceModal() {
 
   return (
     <div onClick={() => setShowInvoice(false)} style={{ position: "fixed", inset: 0, background: "var(--color-modal-overlay)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-modal)", borderRadius: 16, width: "100%", maxWidth: 560, boxShadow: "0 20px 60px rgba(0,0,0,0.18)", overflow: "hidden", display: "flex", flexDirection: "column", maxHeight: "calc(100vh - 48px)" }}>
+      <div onClick={(e) => e.stopPropagation()} data-modal style={{ background: "var(--color-modal)", borderRadius: 16, width: "100%", maxWidth: 560, boxShadow: "var(--color-modal-shadow)", overflow: "hidden", display: "flex", flexDirection: "column", maxHeight: "calc(100vh - 48px)" }}>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 16px", borderBottom: "1px solid var(--color-border-light)", flexShrink: 0 }}>
@@ -214,7 +214,7 @@ export default function InvoiceModal() {
                   {projects.map((p) => (
                     <SelectItem key={p.id} value={String(p.id)} className="focus:bg-[var(--color-accent-light)]">
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color || "#0d9488", display: "inline-block" }} />
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color || "#6366f1", display: "inline-block" }} />
                         {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
                       </span>
                     </SelectItem>

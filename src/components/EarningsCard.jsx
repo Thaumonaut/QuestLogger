@@ -21,7 +21,7 @@ export default function EarningsCard() {
                 fontFamily: "'Parkinsans', sans-serif",
                 background: earningsPeriod === p ? "var(--color-surface)" : "transparent",
                 color: earningsPeriod === p ? "var(--color-accent)" : "var(--color-muted)",
-                boxShadow: earningsPeriod === p ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                boxShadow: earningsPeriod === p ? "var(--color-toggle-shadow)" : "none",
                 transition: "all 0.15s",
               }}>
                 {p === "week" ? "This Week" : "This Month"}

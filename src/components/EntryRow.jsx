@@ -63,7 +63,7 @@ export default function EntryRow({ entry, index }) {
                 {projects.map((p) => (
                   <SelectItem key={p.id} value={String(p.id)} className="focus:bg-[var(--color-accent-light)]">
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color || "#0d9488", display: "inline-block" }} />
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color || "#6366f1", display: "inline-block" }} />
                       {p.name}
                     </span>
                   </SelectItem>

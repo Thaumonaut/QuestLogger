@@ -83,7 +83,7 @@ export default function LogHoursForm() {
                 style={{
                   background: mode === m ? "var(--color-surface)" : "transparent",
                   color: mode === m ? "var(--color-accent)" : "var(--color-muted)",
-                  boxShadow: mode === m ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                  boxShadow: mode === m ? "var(--color-toggle-shadow)" : "none",
                   opacity: clockIn ? 1 : 1, // always visible, just locked when clocked in
                   cursor: clockIn ? "default" : "pointer",
                 }}
@@ -183,7 +183,7 @@ export default function LogHoursForm() {
                         {projects.map((p) => (
                           <SelectItem key={p.id} value={String(p.id)} className="focus:bg-[var(--color-accent-light)]">
                             <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                              <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color || "#0d9488", display: "inline-block" }} />
+                              <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color || "#6366f1", display: "inline-block" }} />
                               {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
                             </span>
                           </SelectItem>
@@ -386,7 +386,7 @@ export default function LogHoursForm() {
                     {projects.map((p) => (
                       <SelectItem key={p.id} value={String(p.id)} className="focus:bg-[var(--color-accent-light)]">
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color || "#0d9488", display: "inline-block" }} />
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color || "#6366f1", display: "inline-block" }} />
                           {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
                         </span>
                       </SelectItem>
