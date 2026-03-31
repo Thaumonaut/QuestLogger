@@ -8,9 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Calendar, Clock, Plus } from "lucide-react";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 
 export default function LogHoursForm() {
   const {
@@ -65,12 +62,6 @@ export default function LogHoursForm() {
     dark
       ? "bg-slate-900/50 border border-slate-700/50 text-white placeholder:text-slate-500 focus:border-cyan-500 focus:ring-cyan-500/20"
       : "bg-white/80 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:ring-blue-100"
-  }`;
-
-  const selectTriggerClass = `w-full h-auto px-4 py-3 rounded-lg text-sm transition-all focus:outline-none focus:ring-2 ${
-    dark
-      ? "bg-slate-900/50 border border-slate-700/50 text-white focus:border-cyan-500 focus:ring-cyan-500/20"
-      : "bg-white/80 border border-slate-200 text-slate-800 focus:border-blue-400 focus:ring-blue-100"
   }`;
 
   return (
@@ -213,23 +204,26 @@ export default function LogHoursForm() {
                         )}
                       </div>
                       {projects.length > 0 && (
-                        <Select
-                          value={clockIn.projectId ? String(clockIn.projectId) : "__none__"}
-                          onValueChange={(v) => updateClockIn({ projectId: v === "__none__" ? null : v })}
-                        >
-                          <SelectTrigger className={selectTriggerClass}><SelectValue /></SelectTrigger>
-                          <SelectContent className={dark ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-200 text-slate-800"}>
-                            <SelectItem value="__none__">No project</SelectItem>
-                            {projects.map((p) => (
-                              <SelectItem key={p.id} value={String(p.id)}>
-                                <span className="flex items-center gap-2">
-                                  <span className="w-2 h-2 rounded-full" style={{ background: p.color || "#14b8a6" }} />
-                                  {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
-                                </span>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className={`flex flex-wrap gap-2 p-3 rounded-lg border ${dark ? "bg-slate-900/50 border-slate-700/50" : "bg-white/80 border-slate-200"}`}>
+                          {projects.map((p) => {
+                            const selected = (clockIn.projectIds || []).includes(p.id);
+                            return (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => {
+                                  const ids = clockIn.projectIds || [];
+                                  updateClockIn({ projectIds: selected ? ids.filter((id) => id !== p.id) : [...ids, p.id] });
+                                }}
+                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${selected ? "opacity-100" : "opacity-50 hover:opacity-75"}`}
+                                style={selected ? { backgroundColor: p.color + "22", color: p.color, borderColor: p.color + "66" } : { borderColor: dark ? "#475569" : "#e2e8f0", color: dark ? "#94a3b8" : "#64748b" }}
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.color || "#14b8a6" }} />
+                                {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
+                              </button>
+                            );
+                          })}
+                        </div>
                       )}
                       
                       <label className="flex items-center gap-2 cursor-pointer mt-3">
@@ -420,24 +414,25 @@ export default function LogHoursForm() {
                   </div>
 
                   {projects.length > 0 && (
-                    <div>
-                      <Select
-                        value={form.projectId ? String(form.projectId) : "__none__"}
-                        onValueChange={(v) => setField("projectId", v === "__none__" ? null : v)}
-                      >
-                        <SelectTrigger className={selectTriggerClass}><SelectValue /></SelectTrigger>
-                        <SelectContent className={dark ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-200 text-slate-800"}>
-                          <SelectItem value="__none__">No project</SelectItem>
-                          {projects.map((p) => (
-                            <SelectItem key={p.id} value={String(p.id)}>
-                              <span className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full" style={{ background: p.color || "#14b8a6" }} />
-                                {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <div className={`flex flex-wrap gap-2 p-3 rounded-lg border ${dark ? "bg-slate-900/50 border-slate-700/50" : "bg-white/80 border-slate-200"}`}>
+                      {projects.map((p) => {
+                        const selected = (form.projectIds || []).includes(p.id);
+                        return (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => {
+                              const ids = form.projectIds || [];
+                              setField("projectIds", selected ? ids.filter((id) => id !== p.id) : [...ids, p.id]);
+                            }}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${selected ? "opacity-100" : "opacity-50 hover:opacity-75"}`}
+                            style={selected ? { backgroundColor: p.color + "22", color: p.color, borderColor: p.color + "66" } : { borderColor: dark ? "#475569" : "#e2e8f0", color: dark ? "#94a3b8" : "#64748b" }}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.color || "#14b8a6" }} />
+                            {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

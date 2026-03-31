@@ -141,7 +141,7 @@ export function makeEmptyForm(s = {}, templates = []) {
         end: tmpl.end || "",
         description: "",
         breaks: (tmpl.breaks || []).map((b) => ({ ...b, id: Date.now() + Math.random() })),
-        projectId: null,
+        projectIds: [],
         billable: true,
       };
     }

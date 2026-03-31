@@ -90,8 +90,20 @@ export function AppProvider({ session, children }) {
       setTimeRounding(settingsRes.data?.time_rounding || "none");
       setDailyTarget(settingsRes.data?.daily_target ?? 0);
       setWeeklyTarget(settingsRes.data?.weekly_target ?? 0);
-      setGoogleToken(settingsRes.data?.google_access_token ?? null);
-      setGoogleTokenExpiry(settingsRes.data?.google_token_expiry ?? 0);
+      // Prefer provider_token from OAuth redirect over stale DB value
+      if (session?.provider_token) {
+        const expiry = Date.now() + 3500 * 1000;
+        setGoogleToken(session.provider_token);
+        setGoogleTokenExpiry(expiry);
+        supabase.from("user_settings").upsert({
+          user_id: session.user.id,
+          google_access_token: session.provider_token,
+          google_token_expiry: expiry,
+        });
+      } else {
+        setGoogleToken(settingsRes.data?.google_access_token ?? null);
+        setGoogleTokenExpiry(settingsRes.data?.google_token_expiry ?? 0);
+      }
       setForm(makeEmptyForm(loadedSettings, loadedTemplates));
       setLoading(false);
       try {
@@ -129,19 +141,6 @@ export function AppProvider({ session, children }) {
     return () => clearInterval(interval);
   }, [reminderTime, session, entries]);
 
-  // ── Capture Google provider_token after Sheets OAuth redirect ─
-  useEffect(() => {
-    if (!session?.provider_token || !session?.user?.id) return;
-    const expiry = Date.now() + 3500 * 1000;
-    setGoogleToken(session.provider_token);
-    setGoogleTokenExpiry(expiry);
-    supabase.from("user_settings").upsert({
-      user_id: session.user.id,
-      google_access_token: session.provider_token,
-      google_token_expiry: expiry,
-    });
-  }, [session?.provider_token]);
-
   // ── Clock tick ───────────────────────────────────────────────
   useEffect(() => {
     if (!clockIn) return;
@@ -153,7 +152,7 @@ export function AppProvider({ session, children }) {
   function handleClockIn() {
     const raw = currentTimeStr();
     const start = roundTimeStr(raw, timeRounding, "down");
-    const data = { start, date: todayStr(), description: "", projectId: null, billable: true, breaks: [], activeBreak: null };
+    const data = { start, date: todayStr(), description: "", projectIds: [], billable: true, breaks: [], activeBreak: null };
     localStorage.setItem("ql_clock_in", JSON.stringify(data));
     setClockIn(data);
   }
@@ -198,7 +197,7 @@ export function AppProvider({ session, children }) {
       minutes,
       description: clockIn.description || "",
       breaks,
-      projectId: clockIn.projectId || null,
+      projectIds: clockIn.projectIds || [],
       billable: clockIn.billable !== false,
     };
     localStorage.removeItem("ql_clock_in");
@@ -228,7 +227,7 @@ export function AppProvider({ session, children }) {
   async function handleSubmit(f = form) {
     if (!f.date || !f.start || !f.end) return;
     const minutes = calcWorked(f.start, f.end, f.breaks);
-    const { data } = await supabase.from("entries").insert({
+    const { data, error } = await supabase.from("entries").insert({
       user_id: session.user.id,
       date: f.date,
       start: f.start || null,
@@ -236,9 +235,10 @@ export function AppProvider({ session, children }) {
       description: f.description || "",
       minutes,
       breaks: f.breaks,
-      project_id: f.projectId || null,
+      project_ids: f.projectIds || [],
       billable: f.billable !== false,
     }).select().single();
+    if (error) { flash("✗ Failed to save entry"); return; }
     if (data) setEntries((prev) => [normalizeEntry(data), ...prev]);
     setForm(makeEmptyForm(settings, templates));
   }
@@ -251,16 +251,17 @@ export function AppProvider({ session, children }) {
   async function saveInlineEdit() {
     if (!inlineForm || !inlineForm.date || !inlineForm.start || !inlineForm.end) return;
     const minutes = calcWorked(inlineForm.start, inlineForm.end, inlineForm.breaks);
-    await supabase.from("entries").update({
+    const { error } = await supabase.from("entries").update({
       date: inlineForm.date,
       start: inlineForm.start || null,
       end_time: inlineForm.end || null,
       description: inlineForm.description || "",
       minutes,
       breaks: inlineForm.breaks,
-      project_id: inlineForm.projectId || null,
+      project_ids: inlineForm.projectIds || [],
       billable: inlineForm.billable !== false,
     }).eq("id", inlineEditId);
+    if (error) { flash("✗ Failed to save entry"); return; }
     setEntries((prev) => prev.map((e) => e.id === inlineEditId ? { ...e, ...inlineForm, minutes } : e));
     setInlineEditId(null);
     setInlineForm(null);
@@ -273,7 +274,7 @@ export function AppProvider({ session, children }) {
       end: entry.end || "",
       description: entry.description || "",
       breaks: (entry.breaks || []).map((b) => ({ ...b, id: Date.now() + Math.random() })),
-      projectId: entry.project_id || null,
+      projectIds: entry.project_ids || [],
       billable: entry.billable !== false,
     });
     logHoursRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -288,7 +289,7 @@ export function AppProvider({ session, children }) {
       end: entry.end,
       description: entry.description,
       breaks: entry.breaks || [],
-      projectId: entry.project_id || null,
+      projectIds: entry.project_ids || [],
       billable: entry.billable !== false,
     });
   }
@@ -563,7 +564,7 @@ export function AppProvider({ session, children }) {
         else rows.push(row(dayLabel, "", "", "", "", "", "", formatDuration(dayMins)));
         for (const e of dayEntries) {
           const bm = unpaidBreakMins(e);
-          const projectName = e.project_id ? (projectMap.get(e.project_id)?.name || "") : "";
+          const projectName = (e.project_ids || []).map((id) => projectMap.get(id)?.name).filter(Boolean).join(", ");
           const billableLabel = e.billable === false ? "No" : "Yes";
           const earned = hasRate && e.billable !== false ? (e.minutes / 60) * hourlyRate : null;
           if (hasRate) rows.push(row("", toDisplayTime(e.start), toDisplayTime(e.end), projectName, billableLabel, bm > 0 ? bm : "", earned != null ? formatMoney(earned) : "", formatDuration(e.minutes), e.description || "", "", ""));
@@ -651,7 +652,7 @@ export function AppProvider({ session, children }) {
         styleAll(dayRow, { fill: lightFill, font: boldFont, border: cellBorder, alignment: { vertical: "middle" } });
         for (const e of dayEntries) {
           const bm = unpaidBreakMins(e);
-          const projectName = e.project_id ? (projectMap.get(e.project_id)?.name || "") : "";
+          const projectName = (e.project_ids || []).map((id) => projectMap.get(id)?.name).filter(Boolean).join(", ");
           const billableLabel = e.billable === false ? "No" : "Yes";
           const earned = hasRate && e.billable !== false ? (e.minutes / 60) * hourlyRate : null;
           const entryCells = hasRate
@@ -846,12 +847,12 @@ export function AppProvider({ session, children }) {
     const dataRows = [...monthEntries]
       .sort((a, b) => a.date.localeCompare(b.date) || (a.start || "").localeCompare(b.start || ""))
       .map((e) => {
-        const proj = projects.find((p) => p.id === e.project_id);
+        const proj = (e.project_ids || []).map((id) => projects.find((p) => p.id === id)).filter(Boolean);
         const dayName = new Date(e.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short" });
         const breakMins = unpaidBreakMins(e);
         const billable = e.billable !== false;
         const earnings = billable && hourlyRate > 0 ? Math.round((e.minutes / 60) * hourlyRate * 100) / 100 : "";
-        return [e.date, dayName, proj?.name || "", e.description || "", toDisplayTime(e.start), toDisplayTime(e.end), Math.round(e.minutes / 60 * 100) / 100, breakMins, billable ? "Yes" : "No", earnings];
+        return [e.date, dayName, proj.map((p) => p.name).join(", "), e.description || "", toDisplayTime(e.start), toDisplayTime(e.end), Math.round(e.minutes / 60 * 100) / 100, breakMins, billable ? "Yes" : "No", earnings];
       });
 
     const toCell = (cell) => typeof cell === "number"

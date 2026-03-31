@@ -24,7 +24,7 @@ export default function InvoiceModal() {
   const filtered = useMemo(() => {
     return entries.filter((e) => {
       if (e.date < dateFrom || e.date > dateTo) return false;
-      if (projectFilter !== "__all__" && String(e.project_id) !== projectFilter) return false;
+      if (projectFilter !== "__all__" && !(e.project_ids || []).includes(projectFilter)) return false;
       return true;
     });
   }, [entries, dateFrom, dateTo, projectFilter]);

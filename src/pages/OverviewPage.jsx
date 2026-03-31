@@ -70,7 +70,7 @@ export default function OverviewPage() {
   const totalEarnings = (billableMins / 60) * hourlyRate;
 
   const activeProjectIds = useMemo(() => {
-    const ids = new Set(monthEntries.map((e) => e.project_id).filter(Boolean));
+    const ids = new Set(monthEntries.flatMap((e) => e.project_ids || []));
     return ids.size;
   }, [monthEntries]);
 

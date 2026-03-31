@@ -8,9 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 
 function timeToHour(t) {
   if (!t) return 8;
@@ -44,12 +41,6 @@ export default function EntryRow({ entry, index }) {
     dark
       ? "bg-slate-900/50 border border-slate-700/50 text-white placeholder:text-slate-500 focus:border-cyan-500 focus:ring-cyan-500/20"
       : "bg-white/80 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:ring-blue-100"
-  }`;
-
-  const selectTriggerClass = `w-full h-auto px-4 py-3 rounded-lg text-sm transition-all focus:outline-none focus:ring-2 ${
-    dark
-      ? "bg-slate-900/50 border border-slate-700/50 text-white focus:border-cyan-500 focus:ring-cyan-500/20"
-      : "bg-white/80 border border-slate-200 text-slate-800 focus:border-blue-400 focus:ring-blue-100"
   }`;
 
   if (isEditing && inlineForm) {
@@ -110,25 +101,28 @@ export default function EntryRow({ entry, index }) {
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
-          <div className="flex-1 w-full sm:max-w-xs">
+          <div className="flex-1 w-full">
             {projects.length > 0 && (
-              <Select
-                value={inlineForm.projectId ? String(inlineForm.projectId) : "__none__"}
-                onValueChange={(v) => setInlineField("projectId", v === "__none__" ? null : v)}
-              >
-                <SelectTrigger className={selectTriggerClass}><SelectValue /></SelectTrigger>
-                <SelectContent className={dark ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-200 text-slate-800"}>
-                  <SelectItem value="__none__">No project</SelectItem>
-                  {projects.map((p) => (
-                    <SelectItem key={p.id} value={String(p.id)}>
-                      <span className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full" style={{ background: p.color || "#14b8a6" }} />
-                        {p.name}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className={`flex flex-wrap gap-2 p-3 rounded-lg border ${dark ? "bg-slate-900/50 border-slate-700/50" : "bg-white/80 border-slate-200"}`}>
+                {projects.map((p) => {
+                  const selected = (inlineForm.projectIds || []).includes(p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        const ids = inlineForm.projectIds || [];
+                        setInlineField("projectIds", selected ? ids.filter((id) => id !== p.id) : [...ids, p.id]);
+                      }}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${selected ? "opacity-100" : "opacity-50 hover:opacity-75"}`}
+                      style={selected ? { backgroundColor: p.color + "22", color: p.color, borderColor: p.color + "66" } : { borderColor: dark ? "#475569" : "#e2e8f0", color: dark ? "#94a3b8" : "#64748b" }}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.color || "#14b8a6" }} />
+                      {p.name}
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -228,7 +222,7 @@ export default function EntryRow({ entry, index }) {
   }
 
   const bm = unpaidBreakMins(entry);
-  const project = projects.find((p) => p.id === entry.project_id);
+  const entryProjects = (entry.project_ids || []).map((id) => projects.find((p) => p.id === id)).filter(Boolean);
 
   const startH = timeToHour(entry.start);
   const endH = timeToHour(entry.end);
@@ -244,14 +238,15 @@ export default function EntryRow({ entry, index }) {
       <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-3 gap-3 relative z-10">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            {project ? (
+            {entryProjects.length > 0 ? entryProjects.map((project) => (
               <span
+                key={project.id}
                 style={{ backgroundColor: project.color + "22", color: project.color, borderColor: project.color + "44" }}
                 className="text-xs px-2.5 py-0.5 rounded-full font-medium border"
               >
                 {project.name}
               </span>
-            ) : (
+            )) : (
               <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
                 dark ? "bg-slate-700/50 text-slate-400" : "bg-slate-100 text-slate-500"
               }`}>
