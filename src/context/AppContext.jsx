@@ -1,0 +1,841 @@
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "../supabase";
+import {
+  isUUID, normalizeEntry, normalizeTemplate, normalizeSettings, normalizeTime,
+  calcWorked, roundTimeStr, currentTimeStr, todayStr, weekStart,
+  makeEmptyForm, formatDuration, formatDecimal, formatMoney, formatMonthLabel,
+  weekRangeLabel, toDisplayTime, downloadFile, unpaidBreakMins,
+} from "../lib/utils";
+
+const AppContext = createContext(null);
+
+export function AppProvider({ session, children }) {
+  // ── Data state ───────────────────────────────────────────────
+  const [entries, setEntries] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [settings, setSettings] = useState({});
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [hourlyRate, setHourlyRate] = useState(0);
+  const [deepseekKey, setDeepseekKey] = useState("");
+  const [reminderTime, setReminderTime] = useState("");
+  const [timeRounding, setTimeRounding] = useState("none");
+  const [dailyTarget, setDailyTarget] = useState(0);
+  const [weeklyTarget, setWeeklyTarget] = useState(0);
+
+  // ── UI state ─────────────────────────────────────────────────
+  const [form, setForm] = useState(() => makeEmptyForm());
+  const [exportMsg, setExportMsg] = useState("");
+  const [localImportBanner, setLocalImportBanner] = useState(null);
+  const importEntriesRef = useRef(null);
+  const importProfileRef = useRef(null);
+  const logHoursRef = useRef(null);
+  const dateInputRef = useRef(null);
+
+  // ── Clock in state ───────────────────────────────────────────
+  const [clockIn, setClockIn] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("ql_clock_in") || "null"); } catch { return null; }
+  });
+  const [clockedTick, setClockedTick] = useState(0);
+
+  // ── Settings modal state ─────────────────────────────────────
+  const [showSettings, setShowSettings] = useState(false);
+  const [draftSettings, setDraftSettings] = useState({});
+  const [draftTemplates, setDraftTemplates] = useState([]);
+  const [draftNewTemplate, setDraftNewTemplate] = useState(null);
+  const [draftEditingId, setDraftEditingId] = useState(null);
+  const [draftEditingTemplate, setDraftEditingTemplate] = useState(null);
+  const [draftProjects, setDraftProjects] = useState([]);
+  const [draftNewProject, setDraftNewProject] = useState(null);
+  const [draftEditingProjectId, setDraftEditingProjectId] = useState(null);
+
+  // ── Entry list state ─────────────────────────────────────────
+  const [inlineEditId, setInlineEditId] = useState(null);
+  const [inlineForm, setInlineForm] = useState(null);
+  const [sortAsc, setSortAsc] = useState(false);
+  const [expandedDates, setExpandedDates] = useState(() => new Set([todayStr()]));
+  const [earningsPeriod, setEarningsPeriod] = useState("week");
+  const [monthSummaries, setMonthSummaries] = useState({});
+  const [rewritingDesc, setRewritingDesc] = useState(false);
+
+  // ── Invoice modal ────────────────────────────────────────────
+  const [showInvoice, setShowInvoice] = useState(false);
+
+  // ── Load data ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!session) return;
+    async function loadData() {
+      setLoading(true);
+      const [entriesRes, templatesRes, settingsRes, projectsRes] = await Promise.all([
+        supabase.from("entries").select("*").order("date", { ascending: false }),
+        supabase.from("templates").select("*").order("created_at"),
+        supabase.from("user_settings").select("*").single(),
+        supabase.from("projects").select("*").order("created_at"),
+      ]);
+      const loadedTemplates = (templatesRes.data ?? []).map(normalizeTemplate);
+      const loadedSettings = settingsRes.data ? normalizeSettings(settingsRes.data) : {};
+      const loadedEntries = (entriesRes.data ?? []).map(normalizeEntry);
+      const loadedProjects = projectsRes.data ?? [];
+      setTemplates(loadedTemplates);
+      setSettings(loadedSettings);
+      setEntries(loadedEntries);
+      setProjects(loadedProjects);
+      setHourlyRate(settingsRes.data?.hourly_rate ?? 0);
+      setDeepseekKey(settingsRes.data?.deepseek_key ?? "");
+      setReminderTime(normalizeTime(settingsRes.data?.reminder_time ?? ""));
+      setTimeRounding(settingsRes.data?.time_rounding || "none");
+      setDailyTarget(settingsRes.data?.daily_target ?? 0);
+      setWeeklyTarget(settingsRes.data?.weekly_target ?? 0);
+      setForm(makeEmptyForm(loadedSettings, loadedTemplates));
+      setLoading(false);
+      try {
+        const oldEntries = JSON.parse(localStorage.getItem("worklog_entries_v2") || "[]");
+        if (oldEntries.length > 0 && (entriesRes.data ?? []).length === 0) {
+          setLocalImportBanner({ count: oldEntries.length });
+        }
+      } catch {}
+    }
+    loadData();
+  }, [session]);
+
+  // ── Reminder notifications ───────────────────────────────────
+  useEffect(() => {
+    if (!reminderTime || !session) return;
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const checkReminder = () => {
+      const now = new Date();
+      const [rh, rm] = reminderTime.split(":").map(Number);
+      const reminderDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), rh, rm, 0);
+      const todayLogged = entries.some((e) => e.date === todayStr());
+      const alreadyNotifiedKey = `ql_notified_${todayStr()}`;
+      if (now >= reminderDate && !todayLogged && !localStorage.getItem(alreadyNotifiedKey)) {
+        new Notification("QuestLogger reminder", {
+          body: "You haven't logged any hours today. Tap to open.",
+          icon: "/icon-192.png",
+          badge: "/icon-192.png",
+          tag: "daily-reminder",
+        });
+        localStorage.setItem(alreadyNotifiedKey, "1");
+      }
+    };
+    checkReminder();
+    const interval = setInterval(checkReminder, 60_000);
+    return () => clearInterval(interval);
+  }, [reminderTime, session, entries]);
+
+  // ── Clock tick ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!clockIn) return;
+    const t = setInterval(() => setClockedTick((n) => n + 1), 30_000);
+    return () => clearInterval(t);
+  }, [clockIn]);
+
+  // ── Clock in/out ─────────────────────────────────────────────
+  function handleClockIn() {
+    const raw = currentTimeStr();
+    const start = roundTimeStr(raw, timeRounding, "down");
+    const data = { start, date: todayStr(), description: "", projectId: null, billable: true, breaks: [], activeBreak: null };
+    localStorage.setItem("ql_clock_in", JSON.stringify(data));
+    setClockIn(data);
+  }
+
+  function updateClockIn(fields) {
+    setClockIn((prev) => {
+      const updated = { ...prev, ...fields };
+      localStorage.setItem("ql_clock_in", JSON.stringify(updated));
+      return updated;
+    });
+  }
+
+  function startClockBreak() {
+    updateClockIn({ activeBreak: { start: currentTimeStr() } });
+  }
+
+  function endClockBreak() {
+    setClockIn((prev) => {
+      if (!prev?.activeBreak) return prev;
+      const newBreak = { id: Date.now().toString(), start: prev.activeBreak.start, end: currentTimeStr(), unpaid: true };
+      const updated = { ...prev, breaks: [...(prev.breaks || []), newBreak], activeBreak: null };
+      localStorage.setItem("ql_clock_in", JSON.stringify(updated));
+      return updated;
+    });
+  }
+
+  // Returns prefilled form values on clock-out (does NOT save to DB)
+  function handleClockOut() {
+    if (!clockIn) return null;
+    const raw = currentTimeStr();
+    const end = roundTimeStr(raw, timeRounding, "up");
+    let breaks = clockIn.breaks || [];
+    // Auto-end any active break
+    if (clockIn.activeBreak) {
+      breaks = [...breaks, { id: Date.now().toString(), start: clockIn.activeBreak.start, end: currentTimeStr(), unpaid: true }];
+    }
+    const minutes = calcWorked(clockIn.start, end, breaks);
+    const prefilled = {
+      date: clockIn.date,
+      start: clockIn.start,
+      end,
+      minutes,
+      description: clockIn.description || "",
+      breaks,
+      projectId: clockIn.projectId || null,
+      billable: clockIn.billable !== false,
+    };
+    localStorage.removeItem("ql_clock_in");
+    setClockIn(null);
+    return prefilled;
+  }
+
+  function clockedElapsed() {
+    if (!clockIn) return "";
+    const [sh, sm] = clockIn.start.split(":").map(Number);
+    const now = new Date();
+    const diff = now.getHours() * 60 + now.getMinutes() - (sh * 60 + sm);
+    if (diff <= 0) return "0m";
+    return diff >= 60 ? `${Math.floor(diff / 60)}h ${diff % 60}m` : `${diff}m`;
+  }
+
+  function breakElapsed() {
+    if (!clockIn?.activeBreak) return "";
+    const [sh, sm] = clockIn.activeBreak.start.split(":").map(Number);
+    const now = new Date();
+    const diff = now.getHours() * 60 + now.getMinutes() - (sh * 60 + sm);
+    if (diff <= 0) return "0m";
+    return diff >= 60 ? `${Math.floor(diff / 60)}h ${diff % 60}m` : `${diff}m`;
+  }
+
+  // ── Entry CRUD ───────────────────────────────────────────────
+  async function handleSubmit(f = form) {
+    if (!f.date || !f.start || !f.end) return;
+    const minutes = calcWorked(f.start, f.end, f.breaks);
+    const { data } = await supabase.from("entries").insert({
+      user_id: session.user.id,
+      date: f.date,
+      start: f.start || null,
+      end_time: f.end || null,
+      description: f.description || "",
+      minutes,
+      breaks: f.breaks,
+      project_id: f.projectId || null,
+      billable: f.billable !== false,
+    }).select().single();
+    if (data) setEntries((prev) => [normalizeEntry(data), ...prev]);
+    setForm(makeEmptyForm(settings, templates));
+  }
+
+  async function handleDelete(id) {
+    await supabase.from("entries").delete().eq("id", id);
+    setEntries((prev) => prev.filter((e) => e.id !== id));
+  }
+
+  async function saveInlineEdit() {
+    if (!inlineForm || !inlineForm.date || !inlineForm.start || !inlineForm.end) return;
+    const minutes = calcWorked(inlineForm.start, inlineForm.end, inlineForm.breaks);
+    await supabase.from("entries").update({
+      date: inlineForm.date,
+      start: inlineForm.start || null,
+      end_time: inlineForm.end || null,
+      description: inlineForm.description || "",
+      minutes,
+      breaks: inlineForm.breaks,
+      project_id: inlineForm.projectId || null,
+      billable: inlineForm.billable !== false,
+    }).eq("id", inlineEditId);
+    setEntries((prev) => prev.map((e) => e.id === inlineEditId ? { ...e, ...inlineForm, minutes } : e));
+    setInlineEditId(null);
+    setInlineForm(null);
+  }
+
+  function duplicateEntry(entry) {
+    setForm({
+      date: todayStr(),
+      start: entry.start || "",
+      end: entry.end || "",
+      description: entry.description || "",
+      breaks: (entry.breaks || []).map((b) => ({ ...b, id: Date.now() + Math.random() })),
+      projectId: entry.project_id || null,
+      billable: entry.billable !== false,
+    });
+    logHoursRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // ── Inline edit helpers ──────────────────────────────────────
+  function startInlineEdit(entry) {
+    setInlineEditId(entry.id);
+    setInlineForm({
+      date: entry.date,
+      start: entry.start,
+      end: entry.end,
+      description: entry.description,
+      breaks: entry.breaks || [],
+      projectId: entry.project_id || null,
+      billable: entry.billable !== false,
+    });
+  }
+  function cancelInlineEdit() { setInlineEditId(null); setInlineForm(null); }
+  function setInlineField(key, val) { setInlineForm((f) => ({ ...f, [key]: val })); }
+  function addInlineBreak() { setInlineForm((f) => ({ ...f, breaks: [...f.breaks, { id: Date.now(), start: "", end: "", unpaid: true }] })); }
+  function updateInlineBreak(id, patch) { setInlineForm((f) => ({ ...f, breaks: f.breaks.map((b) => b.id === id ? { ...b, ...patch } : b) })); }
+  function removeInlineBreak(id) { setInlineForm((f) => ({ ...f, breaks: f.breaks.filter((b) => b.id !== id) })); }
+
+  function toggleExpanded(date, dayEntries) {
+    if (expandedDates.has(date) && inlineEditId && dayEntries.some((e) => e.id === inlineEditId)) {
+      setInlineEditId(null); setInlineForm(null);
+    }
+    setExpandedDates((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) next.delete(date); else next.add(date);
+      return next;
+    });
+  }
+
+  // ── Form helpers ─────────────────────────────────────────────
+  function applyTemplate(tmpl) {
+    setForm((f) => ({
+      ...f,
+      start: tmpl.start || "",
+      end: tmpl.end || "",
+      breaks: (tmpl.breaks || []).map((b) => ({ ...b, id: Date.now() + Math.random() })),
+    }));
+  }
+  function setField(key, val) { setForm((f) => ({ ...f, [key]: val })); }
+  function addBreak() { setForm((f) => ({ ...f, breaks: [...f.breaks, { id: Date.now(), start: "", end: "", unpaid: true }] })); }
+  function updateBreak(id, patch) { setForm((f) => ({ ...f, breaks: f.breaks.map((b) => b.id === id ? { ...b, ...patch } : b) })); }
+  function removeBreak(id) { setForm((f) => ({ ...f, breaks: f.breaks.filter((b) => b.id !== id) })); }
+
+  // ── Settings modal ───────────────────────────────────────────
+  function openSettings() {
+    setDraftSettings({ ...settings, hourlyRate: hourlyRate || "", _deepseekKey: deepseekKey, _reminderTime: reminderTime, _timeRounding: timeRounding, dailyTarget: dailyTarget || "", weeklyTarget: weeklyTarget || "" });
+    setDraftTemplates(templates.map((t) => ({ ...t, breaks: [...(t.breaks || [])] })));
+    setDraftProjects(projects.map((p) => ({ ...p })));
+    setDraftNewTemplate(null);
+    setDraftEditingId(null);
+    setDraftEditingTemplate(null);
+    setDraftNewProject(null);
+    setDraftEditingProjectId(null);
+    setShowSettings(true);
+  }
+
+  async function saveSettings() {
+    const { hourlyRate: draftRate, _deepseekKey: draftKey, _reminderTime: draftReminder, _timeRounding: draftRounding, dailyTarget: draftDaily, weeklyTarget: draftWeekly, ...rest } = draftSettings;
+    const rate = parseFloat(draftRate) || 0;
+    const key = (draftKey || "").trim();
+    const reminder = draftReminder || null;
+    const rounding = draftRounding || "none";
+    const daily = parseFloat(draftDaily) || 0;
+    const weekly = parseFloat(draftWeekly) || 0;
+
+    // Sync templates
+    const existingUUIDs = templates.map((t) => t.id).filter(isUUID);
+    const draftUUIDs = draftTemplates.map((t) => t.id).filter(isUUID);
+    const removed = existingUUIDs.filter((id) => !draftUUIDs.includes(id));
+    if (removed.length) await supabase.from("templates").delete().in("id", removed);
+
+    let finalDefaultTemplateId = rest.defaultTemplateId;
+    if (draftTemplates.length > 0) {
+      const toUpsert = draftTemplates.map((t) => {
+        const obj = { user_id: session.user.id, name: t.name, start: t.start || null, end_time: t.end || null, breaks: t.breaks || [] };
+        if (isUUID(t.id)) obj.id = t.id;
+        return obj;
+      });
+      const { data: saved } = await supabase.from("templates").upsert(toUpsert).select();
+      const normalizedSaved = (saved || []).map(normalizeTemplate);
+      setTemplates(normalizedSaved);
+      if (finalDefaultTemplateId && !isUUID(finalDefaultTemplateId)) {
+        const idx = draftTemplates.findIndex((t) => String(t.id) === String(finalDefaultTemplateId));
+        finalDefaultTemplateId = idx >= 0 && normalizedSaved[idx] ? normalizedSaved[idx].id : undefined;
+      }
+    } else {
+      setTemplates([]);
+    }
+
+    // Sync projects
+    const existingProjectUUIDs = projects.map((p) => p.id).filter(isUUID);
+    const draftProjectUUIDs = draftProjects.map((p) => p.id).filter(isUUID);
+    const removedProjects = existingProjectUUIDs.filter((id) => !draftProjectUUIDs.includes(id));
+    if (removedProjects.length) await supabase.from("projects").delete().in("id", removedProjects);
+    if (draftProjects.length > 0) {
+      const toUpsert = draftProjects.map((p) => {
+        const obj = { user_id: session.user.id, name: p.name, client_name: p.client_name || "", color: p.color || "#0d9488" };
+        if (isUUID(p.id)) obj.id = p.id;
+        return obj;
+      });
+      const { data: savedProjects } = await supabase.from("projects").upsert(toUpsert).select();
+      setProjects(savedProjects ?? draftProjects);
+    } else {
+      setProjects([]);
+    }
+
+    await supabase.from("user_settings").upsert({
+      user_id: session.user.id,
+      name: rest.name || null,
+      default_start: rest.defaultStart || null,
+      default_end: rest.defaultEnd || null,
+      default_template_id: finalDefaultTemplateId || null,
+      hourly_rate: rate,
+      deepseek_key: key,
+      reminder_time: reminder,
+      time_rounding: rounding,
+      daily_target: daily,
+      weekly_target: weekly,
+      updated_at: new Date().toISOString(),
+    });
+
+    const newSettings = { ...rest, defaultTemplateId: finalDefaultTemplateId };
+    setSettings(newSettings);
+    setHourlyRate(rate);
+    setDeepseekKey(key);
+    setReminderTime(reminder || "");
+    setTimeRounding(rounding);
+    setDailyTarget(daily);
+    setWeeklyTarget(weekly);
+    setShowSettings(false);
+  }
+
+  // ── Template draft helpers ───────────────────────────────────
+  function startDraftNew() {
+    setDraftNewTemplate({ name: "", start: "", end: "", breaks: [] });
+    setDraftEditingId(null);
+    setDraftEditingTemplate(null);
+  }
+  function commitDraftNew() {
+    const tempId = Date.now();
+    setDraftTemplates((ts) => [...ts, { ...draftNewTemplate, id: tempId }]);
+    setDraftNewTemplate(null);
+  }
+  function startDraftEdit(tmpl) {
+    setDraftEditingId(tmpl.id);
+    setDraftEditingTemplate({ ...tmpl, breaks: [...(tmpl.breaks || [])] });
+    setDraftNewTemplate(null);
+  }
+  function commitDraftEdit() {
+    setDraftTemplates((ts) => ts.map((t) => t.id === draftEditingId ? draftEditingTemplate : t));
+    setDraftEditingId(null);
+    setDraftEditingTemplate(null);
+  }
+  function deleteDraftTemplate(id) {
+    setDraftTemplates((ts) => ts.filter((t) => t.id !== id));
+    if (draftSettings.defaultTemplateId === id) {
+      setDraftSettings((d) => ({ ...d, defaultTemplateId: undefined }));
+    }
+  }
+
+  // ── Project draft helpers ────────────────────────────────────
+  function startDraftNewProject() {
+    setDraftNewProject({ name: "", client_name: "", color: "#0d9488" });
+    setDraftEditingProjectId(null);
+  }
+  function commitDraftNewProject() {
+    const tempId = Date.now();
+    setDraftProjects((ps) => [...ps, { ...draftNewProject, id: tempId }]);
+    setDraftNewProject(null);
+  }
+  function startDraftEditProject(proj) {
+    setDraftEditingProjectId(proj.id);
+    setDraftNewProject({ ...proj });
+  }
+  function commitDraftEditProject() {
+    setDraftProjects((ps) => ps.map((p) => p.id === draftEditingProjectId ? draftNewProject : p));
+    setDraftEditingProjectId(null);
+    setDraftNewProject(null);
+  }
+  function deleteDraftProject(id) {
+    setDraftProjects((ps) => ps.filter((p) => p.id !== id));
+  }
+
+  // ── AI helpers ───────────────────────────────────────────────
+  async function callDeepSeek(systemPrompt, userPrompt) {
+    const res = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${deepseekKey}` },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        max_tokens: 512,
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+      }),
+    });
+    if (!res.ok) throw new Error(`DeepSeek error ${res.status}`);
+    const data = await res.json();
+    return data.choices[0].message.content.trim();
+  }
+
+  async function rewriteDescription() {
+    if (!form.description.trim() || !deepseekKey) return;
+    setRewritingDesc(true);
+    try {
+      const result = await callDeepSeek(
+        "You are a professional business writer. Rewrite work log descriptions into concise, professional client-facing language. Keep it to 1–2 sentences. Do not invent details not present in the original.",
+        `Rewrite this work description professionally: "${form.description}"`,
+      );
+      setField("description", result);
+    } catch { flash("✗ AI rewrite failed"); }
+    finally { setRewritingDesc(false); }
+  }
+
+  async function generateMonthSummary(monthKey, weeks) {
+    if (!deepseekKey) return;
+    setMonthSummaries((s) => ({ ...s, [monthKey]: { loading: true, text: null } }));
+    try {
+      const allEntries = weeks
+        .flatMap((w) => w.days)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .flatMap(({ date, entries: dayEntries }) =>
+          dayEntries.filter((e) => e.description).map((e) => `${date} (${formatDecimal(e.minutes)}h): ${e.description}`)
+        );
+      const totalMins = weeks.flatMap((w) => w.days).flatMap((d) => d.entries).reduce((a, e) => a + e.minutes, 0);
+      const result = await callDeepSeek(
+        "You are a professional writer creating concise work summaries for client invoices and reports. Write in first person. Be specific about what was accomplished. 2–4 sentences maximum.",
+        `Write a professional summary for ${formatMonthLabel(monthKey)} (${formatDecimal(totalMins)} hours total) from these work log entries:\n\n${allEntries.join("\n")}`,
+      );
+      setMonthSummaries((s) => ({ ...s, [monthKey]: { loading: false, text: result } }));
+    } catch {
+      setMonthSummaries((s) => ({ ...s, [monthKey]: { loading: false, text: null } }));
+      flash("✗ AI summary failed");
+    }
+  }
+
+  // ── Flash message ────────────────────────────────────────────
+  function flash(msg) {
+    setExportMsg(msg);
+    setTimeout(() => setExportMsg(""), 2500);
+  }
+
+  // ── Export / import ──────────────────────────────────────────
+  function buildCSVRows(days, label) {
+    const hasRate = hourlyRate > 0;
+    const projectMap = new Map(projects.map((p) => [p.id, p]));
+    const csv = (val) => { const s = String(val ?? ""); return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s; };
+    const row = (...cells) => cells.map(csv).join(",");
+    const rows = [];
+    const title = settings.name ? `${settings.name}'s Timesheet` : "Timesheet";
+    rows.push(csv(title));
+    if (label) rows.push(row("Period:", label));
+    if (settings.name) rows.push(row("Name:", settings.name));
+    if (hasRate) rows.push(row("Hourly Rate:", `$${hourlyRate.toFixed(2)}`));
+    rows.push("");
+    if (hasRate) {
+      rows.push(row("Date", "Start", "End", "Project", "Billable", "Unpaid Break (mins)", "Income Earned", "Hours Worked", "Description", "Total Income", "Total Hours"));
+    } else {
+      rows.push(row("Date", "Start", "End", "Project", "Billable", "Unpaid Break (mins)", "Hours Worked", "Description", "Total Hours"));
+    }
+    const weekMap = new Map();
+    for (const d of days) {
+      const wk = weekStart(d.date);
+      if (!weekMap.has(wk)) weekMap.set(wk, []);
+      weekMap.get(wk).push(d);
+    }
+    let grandMins = 0, grandEarned = 0;
+    for (const [wkStr, wkDays] of weekMap) {
+      const wkLabel = weekRangeLabel(wkStr);
+      let weekMins = 0, weekEarned = 0;
+      for (const { dayEntries } of wkDays) {
+        for (const e of dayEntries) { weekMins += e.minutes; weekEarned += hasRate && e.billable !== false ? (e.minutes / 60) * hourlyRate : 0; }
+      }
+      if (hasRate) rows.push(row(wkLabel, "", "", "", "", "", "", "", formatMoney(weekEarned), formatDuration(weekMins)));
+      else rows.push(row(wkLabel, "", "", "", "", "", "", formatDuration(weekMins)));
+      for (const { date, dayEntries } of wkDays) {
+        const dayMins = dayEntries.reduce((a, e) => a + e.minutes, 0);
+        const dayEarned = hasRate ? dayEntries.reduce((a, e) => a + (e.billable !== false ? (e.minutes / 60) * hourlyRate : 0), 0) : 0;
+        const dayLabel = new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+        if (hasRate) rows.push(row(dayLabel, "", "", "", "", "", "", "", formatMoney(dayEarned), formatDuration(dayMins)));
+        else rows.push(row(dayLabel, "", "", "", "", "", "", formatDuration(dayMins)));
+        for (const e of dayEntries) {
+          const bm = unpaidBreakMins(e);
+          const projectName = e.project_id ? (projectMap.get(e.project_id)?.name || "") : "";
+          const billableLabel = e.billable === false ? "No" : "Yes";
+          const earned = hasRate && e.billable !== false ? (e.minutes / 60) * hourlyRate : null;
+          if (hasRate) rows.push(row("", toDisplayTime(e.start), toDisplayTime(e.end), projectName, billableLabel, bm > 0 ? bm : "", earned != null ? formatMoney(earned) : "", formatDuration(e.minutes), e.description || "", "", ""));
+          else rows.push(row("", toDisplayTime(e.start), toDisplayTime(e.end), projectName, billableLabel, bm > 0 ? bm : "", formatDuration(e.minutes), e.description || "", ""));
+        }
+        grandMins += dayMins; grandEarned += dayEarned;
+      }
+      rows.push("");
+    }
+    if (hasRate) rows.push(row("TOTAL", "", "", "", "", "", "", "", formatMoney(grandEarned), formatDuration(grandMins)));
+    else rows.push(row("TOTAL", "", "", "", "", "", formatDuration(grandMins)));
+    return rows;
+  }
+
+  function exportAllCSV() {
+    const byDate = {};
+    for (const e of entries) { if (!byDate[e.date]) byDate[e.date] = []; byDate[e.date].push(e); }
+    const days = Object.keys(byDate).sort().map((date) => ({ date, dayEntries: byDate[date] }));
+    const rows = buildCSVRows(days, null);
+    const name = settings.name ? `${settings.name.toLowerCase().replace(/\s+/g, "_")}_` : "";
+    downloadFile(new Blob([rows.join("\n")], { type: "text/csv" }), `${name}work_hours_all.csv`);
+    flash("✓ All data exported");
+  }
+
+  function exportMonthCSV(monthKey, weeks) {
+    const days = [...weeks].flatMap((w) => w.days).sort((a, b) => a.date.localeCompare(b.date)).map(({ date, entries: dayEntries }) => ({ date, dayEntries }));
+    const rows = buildCSVRows(days, formatMonthLabel(monthKey));
+    const name = settings.name ? `${settings.name.toLowerCase().replace(/\s+/g, "_")}_` : "";
+    downloadFile(new Blob([rows.join("\n")], { type: "text/csv" }), `${name}${monthKey}.csv`);
+    flash(`✓ ${formatMonthLabel(monthKey)} exported`);
+  }
+
+  async function buildXLSX(days, label) {
+    const { default: ExcelJS } = await import("exceljs");
+    const hasRate = hourlyRate > 0;
+    const projectMap = new Map(projects.map((p) => [p.id, p]));
+    const NAVY = "FF1F3864", BLUE = "FF4472C4", WHITE = "FFFFFFFF", LIGHT = "FFF0F4FA";
+    const navyFill = { type: "pattern", pattern: "solid", fgColor: { argb: NAVY } };
+    const blueFill = { type: "pattern", pattern: "solid", fgColor: { argb: BLUE } };
+    const lightFill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT } };
+    const whiteFont = { color: { argb: WHITE }, bold: true, name: "Calibri", size: 11 };
+    const boldFont = { bold: true, name: "Calibri", size: 11 };
+    const baseFont = { name: "Calibri", size: 11 };
+    const thinBorder = { style: "thin", color: { argb: "FFD0D7E3" } };
+    const cellBorder = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
+    const styleAll = (row, style) => row.eachCell({ includeEmpty: true }, (cell) => Object.assign(cell, { style }));
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("Timesheet");
+    // Cols: Date, Start, End, Project, Billable, Unpaid Break, [Income Earned, Hours Worked, Description, Total Income, Total Hours] or [Hours Worked, Description, Total Hours]
+    const cols = hasRate ? [20, 12, 12, 18, 10, 22, 16, 16, 38, 16, 16] : [20, 12, 12, 18, 10, 22, 16, 38, 16];
+    ws.columns = cols.map((width) => ({ width }));
+    const numCols = cols.length;
+    const merge = (row) => ws.mergeCells(row.number, 1, row.number, numCols);
+    const titleText = settings.name ? `${settings.name}'s Timesheet${label ? ` – ${label}` : ""}` : `Timesheet${label ? ` – ${label}` : ""}`;
+    const titleRow = ws.addRow([titleText]);
+    merge(titleRow); titleRow.height = 24;
+    titleRow.getCell(1).style = { font: { bold: true, size: 14, name: "Calibri" }, alignment: { horizontal: "center", vertical: "middle" } };
+    const addInfo = (lbl, val) => { const r = ws.addRow([lbl, val || ""]); r.height = 18; styleAll(r, { fill: blueFill, font: whiteFont, border: cellBorder }); };
+    if (settings.name) addInfo("Name:", settings.name);
+    if (label) addInfo("Period:", label);
+    if (hasRate) addInfo("Hourly Rate:", `$${hourlyRate.toFixed(2)}`);
+    ws.addRow([]).height = 6;
+    const headerLabels = hasRate
+      ? ["Date", "Start", "End", "Project", "Billable", "Unpaid Break (mins)", "Income Earned", "Hours Worked", "Description", "Total Income", "Total Hours"]
+      : ["Date", "Start", "End", "Project", "Billable", "Unpaid Break (mins)", "Hours Worked", "Description", "Total Hours"];
+    const hdrRow = ws.addRow(headerLabels);
+    hdrRow.height = 20;
+    styleAll(hdrRow, { fill: navyFill, font: whiteFont, border: cellBorder, alignment: { vertical: "middle" } });
+    const weekMap = new Map();
+    for (const d of days) { const wk = weekStart(d.date); if (!weekMap.has(wk)) weekMap.set(wk, []); weekMap.get(wk).push(d); }
+    let grandMins = 0, grandEarned = 0;
+    for (const [wkStr, wkDays] of weekMap) {
+      const wkLabel = weekRangeLabel(wkStr);
+      let weekMins = 0, weekEarned = 0;
+      for (const { dayEntries } of wkDays) { for (const e of dayEntries) { weekMins += e.minutes; weekEarned += hasRate && e.billable !== false ? (e.minutes / 60) * hourlyRate : 0; } }
+      const wkCells = hasRate ? [wkLabel, "", "", "", "", "", "", "", "", formatMoney(weekEarned), formatDuration(weekMins)] : [wkLabel, "", "", "", "", "", "", "", formatDuration(weekMins)];
+      const wkRow = ws.addRow(wkCells); wkRow.height = 22;
+      styleAll(wkRow, { fill: navyFill, font: whiteFont, border: cellBorder, alignment: { vertical: "middle" } });
+      for (const { date, dayEntries } of wkDays) {
+        const dayMins = dayEntries.reduce((a, e) => a + e.minutes, 0);
+        const dayEarned = hasRate ? dayEntries.reduce((a, e) => a + (e.billable !== false ? (e.minutes / 60) * hourlyRate : 0), 0) : 0;
+        const dayLabel = new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+        const dayCells = hasRate ? [dayLabel, "", "", "", "", "", "", "", "", formatMoney(dayEarned), formatDuration(dayMins)] : [dayLabel, "", "", "", "", "", "", "", formatDuration(dayMins)];
+        const dayRow = ws.addRow(dayCells); dayRow.height = 18;
+        styleAll(dayRow, { fill: lightFill, font: boldFont, border: cellBorder, alignment: { vertical: "middle" } });
+        for (const e of dayEntries) {
+          const bm = unpaidBreakMins(e);
+          const projectName = e.project_id ? (projectMap.get(e.project_id)?.name || "") : "";
+          const billableLabel = e.billable === false ? "No" : "Yes";
+          const earned = hasRate && e.billable !== false ? (e.minutes / 60) * hourlyRate : null;
+          const entryCells = hasRate
+            ? ["", toDisplayTime(e.start), toDisplayTime(e.end), projectName, billableLabel, bm > 0 ? bm : "", earned != null ? formatMoney(earned) : "", formatDuration(e.minutes), e.description || "", "", ""]
+            : ["", toDisplayTime(e.start), toDisplayTime(e.end), projectName, billableLabel, bm > 0 ? bm : "", formatDuration(e.minutes), e.description || "", ""];
+          const entryRow = ws.addRow(entryCells); entryRow.height = 16;
+          styleAll(entryRow, { font: baseFont, border: cellBorder, alignment: { vertical: "middle" } });
+        }
+        grandMins += dayMins; grandEarned += dayEarned;
+      }
+      ws.addRow([]).height = 8;
+    }
+    const totalCells = hasRate ? ["TOTAL", "", "", "", "", "", "", "", "", formatMoney(grandEarned), formatDuration(grandMins)] : ["TOTAL", "", "", "", "", "", "", formatDuration(grandMins), ""];
+    const totalRow = ws.addRow(totalCells); totalRow.height = 20;
+    styleAll(totalRow, { font: boldFont, border: cellBorder, alignment: { vertical: "middle" } });
+    return wb.xlsx.writeBuffer();
+  }
+
+  async function exportMonthXLSX(monthKey, weeks) {
+    const days = [...weeks].flatMap((w) => w.days).sort((a, b) => a.date.localeCompare(b.date)).map(({ date, entries: dayEntries }) => ({ date, dayEntries }));
+    const buffer = await buildXLSX(days, formatMonthLabel(monthKey));
+    const name = settings.name ? `${settings.name.toLowerCase().replace(/\s+/g, "_")}_` : "";
+    downloadFile(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `${name}${monthKey}.xlsx`);
+    flash(`✓ ${formatMonthLabel(monthKey)} exported`);
+  }
+
+  async function exportAllXLSX() {
+    const byDate = {};
+    for (const e of entries) { if (!byDate[e.date]) byDate[e.date] = []; byDate[e.date].push(e); }
+    const days = Object.keys(byDate).sort().map((date) => ({ date, dayEntries: byDate[date] }));
+    const buffer = await buildXLSX(days, null);
+    const name = settings.name ? `${settings.name.toLowerCase().replace(/\s+/g, "_")}_` : "";
+    downloadFile(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `${name}work_hours_all.xlsx`);
+    flash("✓ All data exported");
+  }
+
+  async function importFromLocalStorage() {
+    try {
+      const oldEntries = JSON.parse(localStorage.getItem("worklog_entries_v2") || "[]");
+      const oldTemplates = JSON.parse(localStorage.getItem("worklog_templates_v1") || "[]");
+      const oldSettings = JSON.parse(localStorage.getItem("worklog_settings_v1") || "{}");
+      const oldRate = parseFloat(localStorage.getItem("worklog_hourly_rate") || "0") || 0;
+      const oldKey = localStorage.getItem("worklog_deepseek_key") || "";
+      if (oldEntries.length > 0) {
+        const rows = oldEntries.map((e) => ({ user_id: session.user.id, date: e.date, start: e.start || null, end_time: e.end || null, description: e.description || "", minutes: e.minutes || 0, breaks: e.breaks || [] }));
+        const { data: inserted } = await supabase.from("entries").insert(rows).select();
+        if (inserted) setEntries((prev) => [...(inserted.map(normalizeEntry)), ...prev].sort((a, b) => b.date.localeCompare(a.date)));
+      }
+      if (oldTemplates.length > 0) {
+        const rows = oldTemplates.map((t) => ({ user_id: session.user.id, name: t.name, start: t.start || null, end_time: t.end || null, breaks: t.breaks || [] }));
+        const { data: savedTmpl } = await supabase.from("templates").insert(rows).select();
+        if (savedTmpl) setTemplates((prev) => [...prev, ...savedTmpl.map(normalizeTemplate)]);
+      }
+      await supabase.from("user_settings").upsert({ user_id: session.user.id, name: oldSettings.name || null, default_start: oldSettings.defaultStart || null, default_end: oldSettings.defaultEnd || null, hourly_rate: oldRate, deepseek_key: oldKey, updated_at: new Date().toISOString() });
+      ["worklog_entries_v2", "worklog_templates_v1", "worklog_settings_v1", "worklog_hourly_rate", "worklog_deepseek_key"].forEach((k) => localStorage.removeItem(k));
+      setLocalImportBanner(null);
+      flash(`✓ Imported ${oldEntries.length} ${oldEntries.length === 1 ? "entry" : "entries"} from local storage`);
+    } catch { flash("✗ Import failed"); }
+  }
+
+  async function importEntriesFromFile(file) {
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const arr = Array.isArray(parsed) ? parsed : parsed.entries;
+      if (!Array.isArray(arr) || arr.length === 0) { flash("✗ No entries found in file"); return; }
+      const rows = arr.map((e) => ({ user_id: session.user.id, date: e.date, start: e.start || null, end_time: e.end || e.end_time || null, description: e.description || "", minutes: typeof e.minutes === "number" ? e.minutes : calcWorked(e.start, e.end || e.end_time, e.breaks), breaks: e.breaks || [] })).filter((e) => e.date && (e.start || e.minutes > 0));
+      const { data: inserted, error } = await supabase.from("entries").insert(rows).select();
+      if (error) { flash("✗ Import failed"); return; }
+      setEntries((prev) => [...(inserted ?? []).map(normalizeEntry), ...prev].sort((a, b) => b.date.localeCompare(a.date)));
+      flash(`✓ Imported ${inserted?.length ?? 0} ${inserted?.length === 1 ? "entry" : "entries"}`);
+    } catch { flash("✗ Invalid file format"); }
+  }
+
+  function exportProfile() {
+    const profile = { version: 1, type: "questlogger-profile", settings: { name: settings.name || "", defaultStart: settings.defaultStart || "", defaultEnd: settings.defaultEnd || "", hourlyRate }, templates: templates.map(({ name, start, end, breaks }) => ({ name, start, end, breaks })) };
+    downloadFile(new Blob([JSON.stringify(profile, null, 2)], { type: "application/json" }), "questlogger-profile.json");
+    flash("✓ Profile exported");
+  }
+
+  function importProfileFromFile(file) {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const profile = JSON.parse(ev.target.result);
+        if (profile.type !== "questlogger-profile") { flash("✗ Not a QuestLogger profile file"); return; }
+        if (profile.settings) {
+          setDraftSettings((d) => ({ ...d, name: profile.settings.name || d.name, defaultStart: profile.settings.defaultStart || d.defaultStart, defaultEnd: profile.settings.defaultEnd || d.defaultEnd, hourlyRate: profile.settings.hourlyRate ?? d.hourlyRate }));
+        }
+        if (Array.isArray(profile.templates) && profile.templates.length > 0) {
+          const imported = profile.templates.map((t) => ({ id: Date.now() + Math.random(), name: t.name, start: t.start || "", end: t.end || "", breaks: t.breaks || [] }));
+          setDraftTemplates((prev) => [...prev, ...imported]);
+        }
+        flash("✓ Profile loaded — review and hit Save");
+      } catch { flash("✗ Invalid profile file"); }
+    };
+    reader.readAsText(file);
+  }
+
+  // ── Computed values ──────────────────────────────────────────
+  const todayMins = useMemo(
+    () => entries.filter((e) => e.date === todayStr()).reduce((a, e) => a + e.minutes, 0),
+    [entries],
+  );
+
+  const grouped = useMemo(() => {
+    const byDate = {};
+    for (const e of entries) { if (!byDate[e.date]) byDate[e.date] = []; byDate[e.date].push(e); }
+    for (const date of Object.keys(byDate)) { byDate[date].sort((a, b) => (a.start || "").localeCompare(b.start || "")); }
+    const byMonthWeek = {};
+    for (const [date, dayEntries] of Object.entries(byDate)) {
+      const monthKey = date.slice(0, 7);
+      const wk = weekStart(date);
+      if (!byMonthWeek[monthKey]) byMonthWeek[monthKey] = {};
+      if (!byMonthWeek[monthKey][wk]) byMonthWeek[monthKey][wk] = [];
+      byMonthWeek[monthKey][wk].push({ date, entries: dayEntries });
+    }
+    const dir = sortAsc ? 1 : -1;
+    return Object.keys(byMonthWeek).sort((a, b) => dir * a.localeCompare(b)).map((monthKey) => ({
+      monthKey,
+      weeks: Object.keys(byMonthWeek[monthKey]).sort((a, b) => dir * a.localeCompare(b)).map((weekKey) => ({
+        weekKey,
+        days: [...byMonthWeek[monthKey][weekKey]].sort((a, b) => dir * a.date.localeCompare(b.date)),
+      })),
+    }));
+  }, [entries, sortAsc]);
+
+  const earningsData = useMemo(() => {
+    const today = todayStr();
+    const thisWeekSun = weekStart(today);
+    const thisMonth = today.slice(0, 7);
+    const weekEntries = entries.filter((e) => weekStart(e.date) === thisWeekSun);
+    const monthEntries = entries.filter((e) => e.date.slice(0, 7) === thisMonth);
+    const weekMins = weekEntries.reduce((a, e) => a + e.minutes, 0);
+    const monthMins = monthEntries.reduce((a, e) => a + e.minutes, 0);
+    const weekBillableMins = weekEntries.filter((e) => e.billable !== false).reduce((a, e) => a + e.minutes, 0);
+    const monthBillableMins = monthEntries.filter((e) => e.billable !== false).reduce((a, e) => a + e.minutes, 0);
+    const byWeek = {}, byMonth = {};
+    for (const e of entries) {
+      const wk = weekStart(e.date);
+      byWeek[wk] = (byWeek[wk] || 0) + e.minutes;
+      const mo = e.date.slice(0, 7);
+      byMonth[mo] = (byMonth[mo] || 0) + e.minutes;
+    }
+    const weekKeys = Object.keys(byWeek);
+    const monthKeys = Object.keys(byMonth);
+    const avgWeekMins = weekKeys.length > 0 ? weekKeys.reduce((a, k) => a + byWeek[k], 0) / weekKeys.length : 0;
+    const avgMonthMins = monthKeys.length > 0 ? monthKeys.reduce((a, k) => a + byMonth[k], 0) / monthKeys.length : 0;
+    const periodMins = earningsPeriod === "week" ? weekMins : monthMins;
+    const periodBillableMins = earningsPeriod === "week" ? weekBillableMins : monthBillableMins;
+    const periodNonBillableMins = periodMins - periodBillableMins;
+    return {
+      periodMins, periodBillableMins, periodNonBillableMins,
+      periodEarnings: (periodBillableMins / 60) * hourlyRate,
+      avgWeekMins, avgMonthMins,
+      avgWeekEarnings: (avgWeekMins / 60) * hourlyRate,
+      avgMonthEarnings: (avgMonthMins / 60) * hourlyRate,
+    };
+  }, [entries, hourlyRate, earningsPeriod]);
+
+  const value = {
+    // data
+    session, entries, projects, settings, templates, loading,
+    hourlyRate, deepseekKey, reminderTime, timeRounding, dailyTarget, weeklyTarget,
+    // ui
+    form, setForm, exportMsg, flash,
+    localImportBanner, setLocalImportBanner,
+    importEntriesRef, importProfileRef, logHoursRef, dateInputRef,
+    // clock
+    clockIn, clockedTick, handleClockIn, handleClockOut, clockedElapsed, breakElapsed,
+    updateClockIn, startClockBreak, endClockBreak,
+    // entries
+    handleSubmit, handleDelete, saveInlineEdit, duplicateEntry,
+    inlineEditId, inlineForm,
+    startInlineEdit, cancelInlineEdit, setInlineField,
+    addInlineBreak, updateInlineBreak, removeInlineBreak,
+    sortAsc, setSortAsc, expandedDates, toggleExpanded,
+    // form helpers
+    applyTemplate, setField, addBreak, updateBreak, removeBreak,
+    // settings modal
+    showSettings, setShowSettings, openSettings, saveSettings,
+    draftSettings, setDraftSettings,
+    draftTemplates, draftNewTemplate, draftEditingId, draftEditingTemplate,
+    startDraftNew, commitDraftNew, startDraftEdit, commitDraftEdit, deleteDraftTemplate,
+    setDraftNewTemplate, setDraftEditingId, setDraftEditingTemplate,
+    draftProjects, draftNewProject, draftEditingProjectId,
+    startDraftNewProject, commitDraftNewProject, startDraftEditProject, commitDraftEditProject, deleteDraftProject,
+    setDraftNewProject, setDraftEditingProjectId,
+    // earnings
+    earningsPeriod, setEarningsPeriod, earningsData,
+    // ai
+    rewritingDesc, rewriteDescription,
+    monthSummaries, setMonthSummaries, generateMonthSummary,
+    // invoice
+    showInvoice, setShowInvoice,
+    // computed
+    todayMins, grouped,
+    // export/import
+    exportAllCSV, exportMonthCSV, exportAllXLSX, exportMonthXLSX,
+    importFromLocalStorage, importEntriesFromFile, exportProfile, importProfileFromFile,
+  };
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+}
+
+export function useApp() {
+  return useContext(AppContext);
+}

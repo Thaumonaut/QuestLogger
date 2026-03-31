@@ -1,6 +1,168 @@
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-export function cn(...inputs) {
-  return twMerge(clsx(inputs));
+export function cn(...inputs) { return twMerge(clsx(inputs)); }
+
+// ── Normalizers ──────────────────────────────────────────────
+export function isUUID(id) {
+  return typeof id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
+
+export function normalizeTime(t) { return t ? t.slice(0, 5) : ""; }
+
+export function normalizeEntry(row) {
+  return { ...row, start: normalizeTime(row.start), end: normalizeTime(row.end_time) };
+}
+
+export function normalizeTemplate(row) {
+  return { ...row, start: normalizeTime(row.start), end: normalizeTime(row.end_time) };
+}
+
+export function normalizeSettings(row) {
+  return {
+    name: row.name || "",
+    defaultStart: normalizeTime(row.default_start),
+    defaultEnd: normalizeTime(row.default_end),
+    defaultTemplateId: row.default_template_id || undefined,
+    reminderTime: normalizeTime(row.reminder_time),
+    timeRounding: row.time_rounding || "none",
+    dailyTarget: row.daily_target ?? 0,
+    weeklyTarget: row.weekly_target ?? 0,
+  };
+}
+
+// ── Time math ────────────────────────────────────────────────
+export function parseTime(str) {
+  if (!str) return null;
+  const [h, m] = str.split(":").map(Number);
+  return h * 60 + m;
+}
+
+export function calcWorked(start, end, breaks) {
+  const s = parseTime(start), e = parseTime(end);
+  if (s === null || e === null || e <= s) return 0;
+  const unpaidMins = (breaks || [])
+    .filter((b) => b.unpaid)
+    .reduce((acc, b) => {
+      const bs = parseTime(b.start), be = parseTime(b.end);
+      return bs !== null && be !== null && be > bs ? acc + (be - bs) : acc;
+    }, 0);
+  return Math.max(0, e - s - unpaidMins);
+}
+
+export function unpaidBreakMins(entry) {
+  return (entry.breaks || [])
+    .filter((b) => b.unpaid)
+    .reduce((acc, b) => {
+      const bs = parseTime(b.start), be = parseTime(b.end);
+      return bs !== null && be !== null && be > bs ? acc + (be - bs) : acc;
+    }, 0);
+}
+
+export function roundTimeStr(timeStr, rounding, direction = "nearest") {
+  if (!timeStr || !rounding || rounding === "none") return timeStr;
+  const mins = parseInt(rounding, 10);
+  const [h, m] = timeStr.split(":").map(Number);
+  const total = h * 60 + m;
+  let rounded;
+  if (direction === "down") rounded = Math.floor(total / mins) * mins;
+  else if (direction === "up") rounded = Math.ceil(total / mins) * mins;
+  else rounded = Math.round(total / mins) * mins;
+  const rh = Math.floor(rounded / 60) % 24;
+  const rm = rounded % 60;
+  return `${rh.toString().padStart(2, "0")}:${rm.toString().padStart(2, "0")}`;
+}
+
+export function currentTimeStr() {
+  const now = new Date();
+  return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+}
+
+// ── Formatters ───────────────────────────────────────────────
+export function formatDuration(mins) {
+  if (mins <= 0) return "0h 0m";
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+}
+
+export function formatDecimal(mins) {
+  return (mins / 60).toFixed(2);
+}
+
+export function formatMoney(amount) {
+  return "$" + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+export function formatMonthLabel(yearMonth) {
+  return new Date(yearMonth + "-15T12:00:00").toLocaleDateString("en-US", {
+    month: "long", year: "numeric",
+  });
+}
+
+export function formatDateLabel(dateStr) {
+  return new Date(dateStr + "T12:00:00").toLocaleDateString("en-US", {
+    weekday: "long", month: "long", day: "numeric", year: "numeric",
+  });
+}
+
+export function weekRangeLabel(weekSunStr) {
+  const sun = new Date(weekSunStr + "T12:00:00");
+  const sat = new Date(sun);
+  sat.setDate(sun.getDate() + 6);
+  const fmt = (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${fmt(sun)} – ${fmt(sat)}`;
+}
+
+export function toDisplayTime(val) {
+  if (!val) return "—";
+  const [h, m] = val.split(":").map(Number);
+  const period = h < 12 ? "AM" : "PM";
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${m.toString().padStart(2, "0")} ${period}`;
+}
+
+// ── Date helpers ─────────────────────────────────────────────
+export function todayStr() {
+  return new Date().toISOString().split("T")[0];
+}
+
+export function weekStart(dateStr) {
+  const d = new Date(dateStr + "T12:00:00");
+  d.setDate(d.getDate() - d.getDay());
+  return d.toISOString().split("T")[0];
+}
+
+export function makeEmptyForm(s = {}, templates = []) {
+  if (s.defaultTemplateId) {
+    const tmpl = templates.find((t) => t.id === s.defaultTemplateId);
+    if (tmpl) {
+      return {
+        date: todayStr(),
+        start: tmpl.start || "",
+        end: tmpl.end || "",
+        description: "",
+        breaks: (tmpl.breaks || []).map((b) => ({ ...b, id: Date.now() + Math.random() })),
+        projectId: null,
+        billable: true,
+      };
+    }
+  }
+  return {
+    date: todayStr(),
+    start: s.defaultStart || "",
+    end: s.defaultEnd || "",
+    description: "",
+    breaks: [],
+    projectId: null,
+    billable: true,
+  };
+}
+
+export function downloadFile(blob, filename) {
+  const a = Object.assign(document.createElement("a"), {
+    href: URL.createObjectURL(blob),
+    download: filename,
+  });
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
