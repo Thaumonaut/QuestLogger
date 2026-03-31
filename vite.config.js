@@ -32,7 +32,7 @@ export default defineConfig({
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
-        globPatterns: ["**/*.{js,css,png,svg,ico}"],
+        globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/clmmljondpxiwyvcqrjg\.supabase\.co\/.*/i,

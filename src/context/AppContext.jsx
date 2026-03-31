@@ -34,7 +34,10 @@ export function AppProvider({ session, children }) {
 
   // ── Clock in state ───────────────────────────────────────────
   const [clockIn, setClockIn] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("ql_clock_in") || "null"); } catch { return null; }
+    try {
+      const v = JSON.parse(localStorage.getItem("ql_clock_in") || "null");
+      return v?.start ? v : null; // guard against stale { stopped: true } sentinel in localStorage
+    } catch { return null; }
   });
   const [clockedTick, setClockedTick] = useState(0);
   const [pendingEntry, setPendingEntry] = useState(null);
@@ -292,7 +295,7 @@ export function AppProvider({ session, children }) {
   }
 
   function clockedElapsed() {
-    if (!clockIn) return "";
+    if (!clockIn?.start) return "";
     const [sh, sm] = clockIn.start.split(":").map(Number);
     const now = new Date();
     const diff = now.getHours() * 60 + now.getMinutes() - (sh * 60 + sm);
