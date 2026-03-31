@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss(),
     react(),
     VitePWA({
-      registerType: "prompt",
+      registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "logo.svg", "apple-touch-icon-180x180.png"],
       manifest: {
         name: "QuestLogger",
