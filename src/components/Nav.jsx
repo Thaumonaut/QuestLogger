@@ -43,13 +43,13 @@ export default function Nav() {
         {/* Brand + today stat */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
           <img
-            src="/logo.png"
+            src="/logo.svg"
             alt="QuestLogger"
             style={{
               width: 32,
               height: 32,
               flexShrink: 0,
-              borderRadius: 8,
+              filter: theme === "dark" ? "brightness(0) invert(1)" : "none",
             }}
           />
           <div>
