@@ -62,42 +62,44 @@ export default function Nav() {
           </button>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
+        <div className="flex items-center w-full sm:w-auto justify-between sm:justify-end sm:gap-4">
           <nav className="flex items-center gap-1">
             <NavLink to="/" end className={navLinkClass}>Log</NavLink>
             <NavLink to="/overview" className={navLinkClass}>Overview</NavLink>
           </nav>
 
-          {/* Desktop Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className={`hidden sm:block ${themeBtnCls}`}
-            title={darkMode ? "Light mode" : "Dark mode"}
-          >
-            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Desktop Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className={`hidden sm:block ${themeBtnCls}`}
+              title={darkMode ? "Light mode" : "Dark mode"}
+            >
+              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
 
-          <button 
-            onClick={openSettings}
-            className={`hidden sm:block px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
-            darkMode
-              ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50'
-              : 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-lg shadow-teal-500/30'
-          }`}>
-            Settings
-          </button>
+            <button
+              onClick={openSettings}
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+              darkMode
+                ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50'
+                : 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-lg shadow-teal-500/30'
+            }`}>
+              Settings
+            </button>
 
-          <button 
-            onClick={() => supabase.auth.signOut()}
-            title="Sign out"
-            className={`hidden sm:flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-            darkMode
-              ? 'text-slate-400 hover:text-slate-300 hover:bg-slate-800/50'
-              : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
-          }`}>
-            <LogOut className="w-4 h-4" />
-            <span>Sign out</span>
-          </button>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              title="Sign out"
+              className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+              darkMode
+                ? 'text-slate-400 hover:text-slate-300 hover:bg-slate-800/50'
+                : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+            }`}>
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign out</span>
+            </button>
+          </div>
         </div>
       </div>
     </header>

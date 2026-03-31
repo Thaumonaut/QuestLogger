@@ -48,7 +48,7 @@ export default function EntryRow({ entry, index }) {
       <div className={`p-4 sm:p-5 rounded-xl border transition-all ${
         dark ? "bg-slate-800/40 border-cyan-500/30 shadow-[0_4px_24px_rgba(6,182,212,0.1)]" : "bg-white/80 border-blue-400/30 shadow-lg shadow-blue-500/10"
       }`}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 gap-4 mb-4">
           <div>
             <label className={`block text-xs font-medium mb-1.5 uppercase tracking-wide ${dark ? "text-slate-500" : "text-slate-500"}`}>Date</label>
             <input
@@ -58,14 +58,14 @@ export default function EntryRow({ entry, index }) {
               className={inputClass}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={`block text-xs font-medium mb-1.5 uppercase tracking-wide ${dark ? "text-slate-500" : "text-slate-500"}`}>Start</label>
-              <TimeSelect value={inlineForm.start} onChange={(v) => setInlineField("start", v)} className={inputClass} />
+              <TimeSelect value={inlineForm.start} onChange={(v) => setInlineField("start", v)} />
             </div>
             <div>
               <label className={`block text-xs font-medium mb-1.5 uppercase tracking-wide ${dark ? "text-slate-500" : "text-slate-500"}`}>End</label>
-              <TimeSelect value={inlineForm.end} onChange={(v) => setInlineField("end", v)} className={inputClass} />
+              <TimeSelect value={inlineForm.end} onChange={(v) => setInlineField("end", v)} />
             </div>
           </div>
         </div>
@@ -122,20 +122,20 @@ export default function EntryRow({ entry, index }) {
 
         <div className="mb-4">
           {inlineForm.breaks.map((b) => (
-            <div key={b.id} className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 mb-2 rounded-lg border transition-all ${
+            <div key={b.id} className={`p-3 mb-2 rounded-lg border transition-all ${
               dark ? "bg-slate-900/40 border-slate-700/50" : "bg-slate-50/50 border-slate-200/50"
             }`}>
-              <div className="flex items-center gap-2 flex-1">
-                <TimeSelect value={b.start} onChange={(v) => updateInlineBreak(b.id, { start: v })} className={`px-2 py-1.5 rounded text-sm font-mono focus:outline-none focus:ring-1 ${
-                  dark ? "bg-slate-800 border border-slate-700 text-white focus:border-orange-500 focus:ring-orange-500/50" : "bg-white/80 border border-slate-200 text-slate-800 focus:border-orange-400 focus:ring-orange-400/50"
-                }`} />
-                <span className={`text-xs ${dark ? "text-slate-500" : "text-slate-400"}`}>→</span>
-                <TimeSelect value={b.end} onChange={(v) => updateInlineBreak(b.id, { end: v })} className={`px-2 py-1.5 rounded text-sm font-mono focus:outline-none focus:ring-1 ${
-                  dark ? "bg-slate-800 border border-slate-700 text-white focus:border-orange-500 focus:ring-orange-500/50" : "bg-white/80 border border-slate-200 text-slate-800 focus:border-orange-400 focus:ring-orange-400/50"
-                }`} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                <div>
+                  <span className={`block text-xs font-medium mb-1.5 uppercase tracking-wide ${dark ? "text-slate-500" : "text-slate-500"}`}>From</span>
+                  <TimeSelect value={b.start} onChange={(v) => updateInlineBreak(b.id, { start: v })} />
+                </div>
+                <div>
+                  <span className={`block text-xs font-medium mb-1.5 uppercase tracking-wide ${dark ? "text-slate-500" : "text-slate-500"}`}>To</span>
+                  <TimeSelect value={b.end} onChange={(v) => updateInlineBreak(b.id, { end: v })} />
+                </div>
               </div>
-              
-              <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+              <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox
                     id={`ib-${b.id}`}
@@ -149,7 +149,6 @@ export default function EntryRow({ entry, index }) {
                   />
                   <span className={`text-xs font-medium ${dark ? "text-slate-400" : "text-slate-600"}`}>Unpaid</span>
                 </label>
-                
                 <button
                   onClick={() => removeInlineBreak(b.id)}
                   className={`text-xs font-medium px-2 py-1 rounded transition-colors ${dark ? "text-red-400 hover:bg-red-500/10" : "text-red-500 hover:bg-red-50"}`}

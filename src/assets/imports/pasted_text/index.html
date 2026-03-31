@@ -1,0 +1,1211 @@
+<html lang="en" class=""><head>
+    <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WorkLog</title>
+  <style type="text/css" data-vite-dev-id="/Users/jek/Documents/Weekend Projects/SimpleWorkTracker/src/index.css">*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.19 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  -o-tab-size: 4;
+     tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  -webkit-text-decoration: underline dotted;
+          text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::-moz-placeholder, textarea::-moz-placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+.visible {
+  visibility: visible;
+}
+.fixed {
+  position: fixed;
+}
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.sticky {
+  position: sticky;
+}
+.right-2 {
+  right: 0.5rem;
+}
+.z-50 {
+  z-index: 50;
+}
+.-mx-1 {
+  margin-left: -0.25rem;
+  margin-right: -0.25rem;
+}
+.my-1 {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.mt-1 {
+  margin-top: 0.25rem;
+}
+.block {
+  display: block;
+}
+.inline-block {
+  display: inline-block;
+}
+.inline {
+  display: inline;
+}
+.flex {
+  display: flex;
+}
+.inline-flex {
+  display: inline-flex;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.h-10 {
+  height: 2.5rem;
+}
+.h-3\.5 {
+  height: 0.875rem;
+}
+.h-4 {
+  height: 1rem;
+}
+.h-7 {
+  height: 1.75rem;
+}
+.h-8 {
+  height: 2rem;
+}
+.h-9 {
+  height: 2.25rem;
+}
+.h-\[1px\] {
+  height: 1px;
+}
+.h-\[var\(--radix-select-trigger-height\)\] {
+  height: var(--radix-select-trigger-height);
+}
+.h-full {
+  height: 100%;
+}
+.h-px {
+  height: 1px;
+}
+.max-h-96 {
+  max-height: 24rem;
+}
+.min-h-\[60px\] {
+  min-height: 60px;
+}
+.w-16 {
+  width: 4rem;
+}
+.w-20 {
+  width: 5rem;
+}
+.w-24 {
+  width: 6rem;
+}
+.w-28 {
+  width: 7rem;
+}
+.w-3\.5 {
+  width: 0.875rem;
+}
+.w-36 {
+  width: 9rem;
+}
+.w-4 {
+  width: 1rem;
+}
+.w-44 {
+  width: 11rem;
+}
+.w-48 {
+  width: 12rem;
+}
+.w-56 {
+  width: 14rem;
+}
+.w-7 {
+  width: 1.75rem;
+}
+.w-9 {
+  width: 2.25rem;
+}
+.w-\[1px\] {
+  width: 1px;
+}
+.w-full {
+  width: 100%;
+}
+.min-w-\[8rem\] {
+  min-width: 8rem;
+}
+.min-w-\[var\(--radix-select-trigger-width\)\] {
+  min-width: var(--radix-select-trigger-width);
+}
+.max-w-xs {
+  max-width: 20rem;
+}
+.shrink-0 {
+  flex-shrink: 0;
+}
+.cursor-default {
+  cursor: default;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+.select-none {
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+}
+.resize-none {
+  resize: none;
+}
+.resize {
+  resize: both;
+}
+.flex-col {
+  flex-direction: column;
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.gap-3 {
+  gap: 0.75rem;
+}
+.space-y-1\.5 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.375rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.375rem * var(--tw-space-y-reverse));
+}
+.space-y-2 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+}
+.overflow-hidden {
+  overflow: hidden;
+}
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+.rounded {
+  border-radius: 0.25rem;
+}
+.rounded-md {
+  border-radius: 0.375rem;
+}
+.rounded-sm {
+  border-radius: 0.125rem;
+}
+.rounded-xl {
+  border-radius: 0.75rem;
+}
+.border {
+  border-width: 1px;
+}
+.border-none {
+  border-style: none;
+}
+.border-\[var\(--color-border\)\] {
+  border-color: var(--color-border);
+}
+.border-transparent {
+  border-color: transparent;
+}
+.bg-\[var\(--color-accent-light\)\] {
+  background-color: var(--color-accent-light);
+}
+.bg-\[var\(--color-input-bg\)\] {
+  background-color: var(--color-input-bg);
+}
+.bg-\[var\(--color-surface\)\] {
+  background-color: var(--color-surface);
+}
+.bg-transparent {
+  background-color: transparent;
+}
+.p-0 {
+  padding: 0px;
+}
+.p-1 {
+  padding: 0.25rem;
+}
+.p-6 {
+  padding: 1.5rem;
+}
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.px-2\.5 {
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+}
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.px-5 {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.px-8 {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+.py-0\.5 {
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.py-1\.5 {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.pb-2 {
+  padding-bottom: 0.5rem;
+}
+.pb-6 {
+  padding-bottom: 1.5rem;
+}
+.pl-2 {
+  padding-left: 0.5rem;
+}
+.pr-8 {
+  padding-right: 2rem;
+}
+.pt-0 {
+  padding-top: 0px;
+}
+.pt-2 {
+  padding-top: 0.5rem;
+}
+.pt-3 {
+  padding-top: 0.75rem;
+}
+.pt-6 {
+  padding-top: 1.5rem;
+}
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.font-medium {
+  font-weight: 500;
+}
+.font-semibold {
+  font-weight: 600;
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.capitalize {
+  text-transform: capitalize;
+}
+.italic {
+  font-style: italic;
+}
+.leading-none {
+  line-height: 1;
+}
+.tracking-tight {
+  letter-spacing: -0.025em;
+}
+.text-\[var\(--color-accent\)\] {
+  color: var(--color-accent);
+}
+.text-\[var\(--color-secondary\)\] {
+  color: var(--color-secondary);
+}
+.text-\[var\(--color-text\)\] {
+  color: var(--color-text);
+}
+.text-current {
+  color: currentColor;
+}
+.underline-offset-4 {
+  text-underline-offset: 4px;
+}
+.opacity-50 {
+  opacity: 0.5;
+}
+.shadow {
+  --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-md {
+  --tw-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-sm {
+  --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.outline-none {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.outline {
+  outline-style: solid;
+}
+.invert {
+  --tw-invert: invert(100%);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.filter {
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* ── Light mode ──────────────────────────────────────────────── */
+:root {
+  --color-bg: #f5f7ff;
+  --color-surface: #ffffff;
+  --color-surface-raised: #eef1ff;
+  --color-border: #dce3fa;
+  --color-border-light: #eef1ff;
+  --color-text: #0f0d2e;
+  --color-text-secondary: #2e2b6b;
+  --color-muted: #8a8dba;
+  --color-secondary: #5a5d99;
+  --color-accent: #0d9488;
+  --color-accent-hover: #0f766e;
+  --color-accent-light: #f0fdfa;
+  --color-accent-light-hover: #ccfbf1;
+  --color-accent-border: #99f6e4;
+  --color-accent-text: #134e4a;
+  --color-accent-bright: #14b8a6;
+  --color-nav: #ffffff;
+  --color-nav-border: #dce3fa;
+  --color-modal: #ffffff;
+  --color-modal-overlay: rgba(15, 13, 46, 0.4);
+  --color-input-bg: #ffffff;
+  --color-tag-bg: #eef1ff;
+  --color-tag-text: #5a5d99;
+  --color-danger: #ef4444;
+  --color-danger-bg: #fef2f2;
+  --color-warn-bg: #fffbeb;
+  --color-warn-border: #fcd34d;
+  --color-warn-text: #92400e;
+  --color-warn-muted: #b45309;
+  --color-success: #22c55e;
+  /* component helpers */
+  --color-toggle-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --color-modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Dark mode  —  High-contrast black + teal glassmorphism
+
+   60 %  True black void (#050505)
+         Near-black with micro warm cast. Maximum contrast.
+         Noise texture adds depth so it never feels flat.
+
+   30 %  Dark glass surfaces
+         Cards are opaque dark panels with teal-tinted borders.
+         High contrast against the void for sharp separation.
+
+   10 %  Vibrant teal / aquamarine accent
+         Punchy green-cyan for buttons, highlights, active states.
+         Gradient aurora bleeds add life to the void.
+──────────────────────────────────────────────────────────────────── */
+.dark {
+  /* ── Base — true black ── */
+  --color-bg: #050505;
+  --color-surface: rgba(14, 20, 26, 0.85);
+  --color-surface-raised: rgba(20, 28, 36, 0.90);
+
+  /* ── Borders — teal-tinted glass edges ── */
+  --color-border: rgba(45, 212, 191, 0.12);
+  --color-border-light: rgba(45, 212, 191, 0.06);
+
+  /* ── Typography — high-contrast white hierarchy ── */
+  --color-text: #f0f2f5;
+  --color-text-secondary: rgba(210, 220, 232, 0.82);
+  --color-muted: rgba(150, 165, 185, 0.50);
+  --color-secondary: rgba(175, 190, 210, 0.68);
+
+  /* ── Accent — vibrant teal / aquamarine (10%) ── */
+  --color-accent: #2dd4bf;
+  --color-accent-hover: #5eead4;
+  --color-accent-light: rgba(45, 212, 191, 0.12);
+  --color-accent-light-hover: rgba(45, 212, 191, 0.20);
+  --color-accent-border: rgba(45, 212, 191, 0.35);
+  --color-accent-text: #99f6e4;
+  --color-accent-bright: #14b8a6;
+
+  /* ── Nav — solid dark panel ── */
+  --color-nav: rgba(8, 12, 16, 0.88);
+  --color-nav-border: rgba(45, 212, 191, 0.10);
+
+  /* ── Modal — near-black ── */
+  --color-modal: rgba(6, 8, 12, 0.96);
+  --color-modal-overlay: rgba(0, 0, 0, 0.85);
+
+  /* ── Inputs — dark panel ── */
+  --color-input-bg: rgba(10, 16, 22, 0.70);
+
+  /* ── Tags ── */
+  --color-tag-bg: rgba(45, 212, 191, 0.10);
+  --color-tag-text: rgba(153, 246, 228, 0.75);
+
+  /* ── Status ── */
+  --color-danger: #f87171;
+  --color-danger-bg: rgba(69, 10, 10, 0.55);
+  --color-warn-bg: rgba(28, 18, 7, 0.65);
+  --color-warn-border: rgba(120, 53, 15, 0.55);
+  --color-warn-text: #fef3c7;
+  --color-warn-muted: #fde68a;
+  --color-success: #4ade80;
+
+  /* ── Component helpers ── */
+  --color-toggle-shadow: 0 0 0 1px rgba(45, 212, 191, 0.22),
+                         inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --color-modal-shadow: 0 0 0 1px rgba(45, 212, 191, 0.10),
+                        0 32px 80px rgba(0, 0, 0, 0.90),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* ── 60% — void with aurora gradients + noise texture ──────────── */
+html.dark body {
+  background-color: #050505;
+  background-image:
+    /* noise texture — subtle grain for depth */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"),
+    /* teal aurora — top-right glow */
+    radial-gradient(ellipse 90% 60% at 95%  -10%, rgba(20, 184, 166, 0.25) 0%, transparent 50%),
+    /* teal aurora — bottom-left glow */
+    radial-gradient(ellipse 70% 55% at  -5% 105%, rgba(45, 212, 191, 0.15) 0%, transparent 48%),
+    /* deep center glow — very subtle warmth */
+    radial-gradient(ellipse 50% 40% at  50%  40%, rgba(13, 148, 136, 0.08) 0%, transparent 60%),
+    /* subtle top-to-bottom gradient for depth */
+    linear-gradient(180deg, rgba(45, 212, 191, 0.03) 0%, transparent 40%, rgba(0, 0, 0, 0.3) 100%);
+  min-height: 100vh;
+}
+
+/* ── 30% — high-contrast glass cards ────────────────────────────── */
+html.dark .shadow-sm {
+  backdrop-filter: blur(20px) saturate(130%);
+  -webkit-backdrop-filter: blur(20px) saturate(130%);
+  box-shadow:
+    0 0 0 1px rgba(45, 212, 191, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 4px 24px rgba(0, 0, 0, 0.60);
+}
+
+/* ── Nav — solid dark bar ────────────────────────────────────────── */
+html.dark [data-nav] {
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+}
+
+/* ── Modal glass ───────────────────────────────────────────────── */
+html.dark [data-modal] {
+  backdrop-filter: blur(36px) saturate(140%);
+  -webkit-backdrop-filter: blur(36px) saturate(140%);
+}
+
+/* ── Animations ────────────────────────────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Entry row hover ───────────────────────────────────────────── */
+.entry-row:hover { background: var(--color-accent-light); }
+.entry-row:hover .delete-btn { opacity: 1 !important; }
+.file\:border-0::file-selector-button {
+  border-width: 0px;
+}
+.file\:bg-transparent::file-selector-button {
+  background-color: transparent;
+}
+.file\:text-sm::file-selector-button {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.file\:font-medium::file-selector-button {
+  font-weight: 500;
+}
+.placeholder\:text-\[var\(--color-muted\)\]::-moz-placeholder {
+  color: var(--color-muted);
+}
+.placeholder\:text-\[var\(--color-muted\)\]::placeholder {
+  color: var(--color-muted);
+}
+.last\:border-0:last-child {
+  border-width: 0px;
+}
+.hover\:border-\[var\(--color-muted\)\]:hover {
+  border-color: var(--color-muted);
+}
+.hover\:bg-\[var\(--color-surface-raised\)\]:hover {
+  background-color: var(--color-surface-raised);
+}
+.hover\:bg-red-50:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(254 242 242 / var(--tw-bg-opacity, 1));
+}
+.hover\:text-\[var\(--color-text\)\]:hover {
+  color: var(--color-text);
+}
+.hover\:text-red-400:hover {
+  --tw-text-opacity: 1;
+  color: rgb(248 113 113 / var(--tw-text-opacity, 1));
+}
+.hover\:text-slate-600:hover {
+  --tw-text-opacity: 1;
+  color: rgb(71 85 105 / var(--tw-text-opacity, 1));
+}
+.hover\:underline:hover {
+  text-decoration-line: underline;
+}
+.focus\:bg-\[var\(--color-accent-light\)\]:focus {
+  background-color: var(--color-accent-light);
+}
+.focus\:text-\[var\(--color-accent-text\)\]:focus {
+  color: var(--color-accent-text);
+}
+.focus\:outline-none:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.focus\:ring-1:focus {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+.focus\:ring-2:focus {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+.focus\:ring-offset-2:focus {
+  --tw-ring-offset-width: 2px;
+}
+.focus-visible\:outline-none:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.focus-visible\:ring-1:focus-visible {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+.focus-visible\:ring-2:focus-visible {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+.disabled\:pointer-events-none:disabled {
+  pointer-events: none;
+}
+.disabled\:cursor-not-allowed:disabled {
+  cursor: not-allowed;
+}
+.disabled\:opacity-40:disabled {
+  opacity: 0.4;
+}
+.disabled\:opacity-50:disabled {
+  opacity: 0.5;
+}
+.peer:disabled ~ .peer-disabled\:cursor-not-allowed {
+  cursor: not-allowed;
+}
+.peer:disabled ~ .peer-disabled\:opacity-70 {
+  opacity: 0.7;
+}
+.data-\[disabled\]\:pointer-events-none[data-disabled] {
+  pointer-events: none;
+}
+.data-\[side\=bottom\]\:translate-y-1[data-side="bottom"] {
+  --tw-translate-y: 0.25rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.data-\[side\=left\]\:-translate-x-1[data-side="left"] {
+  --tw-translate-x: -0.25rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.data-\[side\=right\]\:translate-x-1[data-side="right"] {
+  --tw-translate-x: 0.25rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.data-\[side\=top\]\:-translate-y-1[data-side="top"] {
+  --tw-translate-y: -0.25rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.data-\[state\=checked\]\:border-\[var\(--color-accent\)\][data-state="checked"] {
+  border-color: var(--color-accent);
+}
+.data-\[state\=checked\]\:bg-\[var\(--color-accent\)\][data-state="checked"] {
+  background-color: var(--color-accent);
+}
+.data-\[disabled\]\:opacity-50[data-disabled] {
+  opacity: 0.5;
+}
+.\[\&\>span\]\:line-clamp-1>span {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+</style><script src="chrome-extension://mooikfkahbdckldjjndioackbalphokd/assets/prompt.js"></script></head>
+  <body>
+    <div id="root"><div style="min-height: 100vh; background: var(--color-bg); color: var(--color-text);"><div data-nav="true" style="background: var(--color-nav); border-bottom: 1px solid var(--color-nav-border); position: sticky; top: 0px; z-index: 10; box-shadow: 0 1px 0 var(--color-nav-border);"><div style="max-width: 720px; margin: 0px auto; padding: 0px 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 12px;"><div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;"><img src="/logo.svg" alt="QuestLogger" style="width: 32px; height: 32px; flex-shrink: 0; filter: none;"><div><p style="font-size: 14px; font-weight: 600; color: var(--color-text); line-height: 1; font-family: Parkinsans, sans-serif; margin: 0px;">Jacob's WorkLog</p><p style="font-size: 11px; color: var(--color-muted); margin: 0px; font-family: &quot;DM Mono&quot;, monospace;">No hours logged today</p></div></div><nav style="display: flex; align-items: center; gap: 4px;"><a aria-current="page" class="text-sm font-semibold px-3 py-1.5 rounded-md transition-colors text-[var(--color-accent)] bg-[var(--color-accent-light)]" href="/" data-discover="true">Log</a><a class="text-sm font-semibold px-3 py-1.5 rounded-md transition-colors text-[var(--color-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-raised)]" href="/overview" data-discover="true">Overview</a></nav><div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;"><button title="Switch to dark mode" style="background: none; border: 1px solid var(--color-border); border-radius: 8px; cursor: pointer; padding: 5px 8px; font-size: 15px; line-height: 1; color: var(--color-secondary); transition: 0.15s;">🌙</button><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 rounded-md px-3 h-8 text-xs font-semibold" style="background: var(--color-accent); color: rgb(255, 255, 255);">Settings</button><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground rounded-md px-3 h-8 text-xs" style="color: var(--color-muted);">Sign out</button></div></div></div><div style="max-width: 720px; margin: 0px auto; padding: 32px 24px 64px;"><div class="rounded-xl border bg-card text-card-foreground shadow-sm mb-8" style="background: var(--color-surface); border-color: var(--color-border);"><div class="flex flex-col space-y-1.5 p-6 px-6 pt-6 pb-2"><div style="display: flex; align-items: center; justify-content: space-between;"><div><div class="font-semibold leading-none tracking-tight" style="font-size: 15px; font-weight: 600; color: var(--color-text); font-family: Parkinsans, sans-serif;">Log Hours</div></div><div style="display: flex; background: var(--color-tag-bg); border-radius: 8px; padding: 3px; gap: 2px;"><button class="px-3 py-1.5 rounded-md text-xs font-semibold border-none cursor-pointer transition-colors" style="background: var(--color-surface); color: var(--color-accent); box-shadow: var(--color-toggle-shadow); opacity: 1; cursor: pointer;">Manual</button><button class="px-3 py-1.5 rounded-md text-xs font-semibold border-none cursor-pointer transition-colors" style="background: transparent; color: var(--color-muted); box-shadow: none; opacity: 1; cursor: pointer;">Auto</button></div></div></div><div class="p-6 px-6 pb-6 pt-2"><div class="last:border-0" style="display: grid; grid-template-columns: 140px 1fr; column-gap: 24px; align-items: start; padding-top: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--color-border-light);"><div style="padding-top: 8px;"><p style="font-size: 13px; font-weight: 500; color: var(--color-secondary); margin: 0px;">Template</p><p style="font-size: 11px; color: var(--color-muted); margin-top: 2px;">Apply saved defaults</p></div><div><div class="flex items-center gap-2 flex-wrap"><button style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 500; color: var(--color-accent); cursor: pointer; white-space: nowrap; transition: 0.15s;">Average Day</button></div></div></div><div class="last:border-0" style="display: grid; grid-template-columns: 140px 1fr; column-gap: 24px; align-items: start; padding-top: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--color-border-light);"><div style="padding-top: 8px;"><p style="font-size: 13px; font-weight: 500; color: var(--color-secondary); margin: 0px;">Date</p></div><div><label style="display: inline-flex; align-items: center; gap: 10px; cursor: pointer; position: relative; background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 10px; padding: 10px 16px; transition: border-color 0.15s;"><input type="date" value="2026-03-31" style="position: absolute; inset: 0px; opacity: 0; width: 100%; height: 100%; cursor: pointer; pointer-events: none;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; position: relative; z-index: 0;"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><div style="position: relative; z-index: 0;"><p style="font-size: 14px; font-weight: 600; color: var(--color-text); line-height: 1.2; margin: 0px;">Tuesday</p><p style="font-size: 12px; color: var(--color-secondary); margin: 2px 0px 0px;">March 31, 2026</p></div></label></div></div><div class="last:border-0" style="display: grid; grid-template-columns: 140px 1fr; column-gap: 24px; align-items: start; padding-top: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--color-border-light);"><div style="padding-top: 8px;"><p style="font-size: 13px; font-weight: 500; color: var(--color-secondary); margin: 0px;">Start time</p></div><div><div class="flex items-center gap-2"><button type="button" role="combobox" aria-controls="radix-:r335:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex items-center justify-between whitespace-nowrap rounded-md border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&amp;&gt;span]:line-clamp-1 bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-muted)] focus:ring-[var(--color-accent)]/40 focus:ring-2 h-10 text-sm shadow-sm w-16"><span style="pointer-events: none;">9</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4 opacity-50" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><span style="color: var(--color-muted); font-weight: 600; font-size: 1rem; user-select: none;">:</span><button type="button" role="combobox" aria-controls="radix-:r337:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex items-center justify-between whitespace-nowrap rounded-md border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&amp;&gt;span]:line-clamp-1 bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-muted)] focus:ring-[var(--color-accent)]/40 focus:ring-2 h-10 text-sm shadow-sm w-16"><span style="pointer-events: none;">00</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4 opacity-50" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><button type="button" role="combobox" aria-controls="radix-:r339:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex items-center justify-between whitespace-nowrap rounded-md border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&amp;&gt;span]:line-clamp-1 bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-muted)] focus:ring-[var(--color-accent)]/40 focus:ring-2 h-10 text-sm shadow-sm w-20"><span style="pointer-events: none;">AM</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4 opacity-50" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button></div></div></div><div class="last:border-0" style="display: grid; grid-template-columns: 140px 1fr; column-gap: 24px; align-items: start; padding-top: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--color-border-light);"><div style="padding-top: 8px;"><p style="font-size: 13px; font-weight: 500; color: var(--color-secondary); margin: 0px;">End time</p></div><div><div class="flex items-center gap-2"><button type="button" role="combobox" aria-controls="radix-:r33b:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex items-center justify-between whitespace-nowrap rounded-md border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&amp;&gt;span]:line-clamp-1 bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-muted)] focus:ring-[var(--color-accent)]/40 focus:ring-2 h-10 text-sm shadow-sm w-16"><span style="pointer-events: none;">6</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4 opacity-50" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><span style="color: var(--color-muted); font-weight: 600; font-size: 1rem; user-select: none;">:</span><button type="button" role="combobox" aria-controls="radix-:r33d:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex items-center justify-between whitespace-nowrap rounded-md border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&amp;&gt;span]:line-clamp-1 bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-muted)] focus:ring-[var(--color-accent)]/40 focus:ring-2 h-10 text-sm shadow-sm w-16"><span style="pointer-events: none;">00</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4 opacity-50" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><button type="button" role="combobox" aria-controls="radix-:r33f:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex items-center justify-between whitespace-nowrap rounded-md border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&amp;&gt;span]:line-clamp-1 bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-muted)] focus:ring-[var(--color-accent)]/40 focus:ring-2 h-10 text-sm shadow-sm w-20"><span style="pointer-events: none;">PM</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4 opacity-50" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button></div></div></div><div class="last:border-0" style="display: grid; grid-template-columns: 140px 1fr; column-gap: 24px; align-items: start; padding-top: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--color-border-light);"><div style="padding-top: 8px;"><p style="font-size: 13px; font-weight: 500; color: var(--color-secondary); margin: 0px;">Description</p><p style="font-size: 11px; color: var(--color-muted); margin-top: 2px;">What did you work on?</p></div><div><div style="position: relative;"><textarea class="flex min-h-[60px] w-full rounded-md border px-3 py-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] placeholder:text-[var(--color-muted)] focus-visible:ring-[var(--color-accent)]/40 focus-visible:ring-2 text-sm shadow-sm resize-none" placeholder="e.g. Reviewed pull requests, team standup, client call…" rows="3"></textarea></div></div></div><div class="last:border-0" style="display: grid; grid-template-columns: 140px 1fr; column-gap: 24px; align-items: start; padding-top: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--color-border-light);"><div style="padding-top: 8px;"><p style="font-size: 13px; font-weight: 500; color: var(--color-secondary); margin: 0px;">Project</p></div><div><button type="button" role="combobox" aria-controls="radix-:r33h:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex items-center justify-between whitespace-nowrap rounded-md border px-3 py-2 ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&amp;&gt;span]:line-clamp-1 bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] placeholder:text-[var(--color-muted)] focus-visible:ring-[var(--color-accent)]/40 focus-visible:ring-2 text-sm shadow-sm w-48 h-10"><span style="pointer-events: none;">No project</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4 opacity-50" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button></div></div><div class="last:border-0" style="display: grid; grid-template-columns: 140px 1fr; column-gap: 24px; align-items: start; padding-top: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--color-border-light);"><div style="padding-top: 8px;"><p style="font-size: 13px; font-weight: 500; color: var(--color-secondary); margin: 0px;">Billable</p></div><div><div style="display: flex; align-items: center; gap: 8px; padding-top: 4px;"><button type="button" role="checkbox" aria-checked="true" data-state="checked" value="on" class="peer shrink-0 rounded-sm border shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:text-primary-foreground border-[var(--color-border)] data-[state=checked]:bg-[var(--color-accent)] data-[state=checked]:border-[var(--color-accent)] h-4 w-4" id="form-billable"><span data-state="checked" class="flex items-center justify-center text-current" style="pointer-events: none;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check h-4 w-4"><path d="M20 6 9 17l-5-5"></path></svg></span></button><label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="form-billable" style="font-size: 13px; color: var(--color-secondary); cursor: pointer;">Billable time</label></div></div></div><div class="last:border-0" style="display: grid; grid-template-columns: 140px 1fr; column-gap: 24px; align-items: start; padding-top: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--color-border-light);"><div style="padding-top: 8px;"><p style="font-size: 13px; font-weight: 500; color: var(--color-secondary); margin: 0px;">Breaks</p><p style="font-size: 11px; color: var(--color-muted); margin-top: 2px;">Unpaid breaks are deducted</p></div><div><div class="space-y-2"><div style="background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: 10px; padding: 10px 14px; display: flex; flex-direction: column; gap: 10px;"><div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;"><div><p style="font-size: 11px; color: var(--color-muted); margin-bottom: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">From</p><div class="flex items-center gap-2"><button type="button" role="combobox" aria-controls="radix-:r33j:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex items-center justify-between whitespace-nowrap rounded-md border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&amp;&gt;span]:line-clamp-1 bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-muted)] focus:ring-[var(--color-accent)]/40 focus:ring-2 h-10 text-sm shadow-sm w-16"><span style="pointer-events: none;">9</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4 opacity-50" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><span style="color: var(--color-muted); font-weight: 600; font-size: 1rem; user-select: none;">:</span><button type="button" role="combobox" aria-controls="radix-:r33l:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex items-center justify-between whitespace-nowrap rounded-md border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&amp;&gt;span]:line-clamp-1 bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-muted)] focus:ring-[var(--color-accent)]/40 focus:ring-2 h-10 text-sm shadow-sm w-16"><span style="pointer-events: none;">15</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4 opacity-50" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><button type="button" role="combobox" aria-controls="radix-:r33n:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex items-center justify-between whitespace-nowrap rounded-md border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&amp;&gt;span]:line-clamp-1 bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-muted)] focus:ring-[var(--color-accent)]/40 focus:ring-2 h-10 text-sm shadow-sm w-20"><span style="pointer-events: none;">AM</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4 opacity-50" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button></div></div><div style="padding-top: 18px; color: var(--color-muted);">→</div><div><p style="font-size: 11px; color: var(--color-muted); margin-bottom: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">To</p><div class="flex items-center gap-2"><button type="button" role="combobox" aria-controls="radix-:r33p:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex items-center justify-between whitespace-nowrap rounded-md border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&amp;&gt;span]:line-clamp-1 bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-muted)] focus:ring-[var(--color-accent)]/40 focus:ring-2 h-10 text-sm shadow-sm w-16"><span style="pointer-events: none;">10</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4 opacity-50" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><span style="color: var(--color-muted); font-weight: 600; font-size: 1rem; user-select: none;">:</span><button type="button" role="combobox" aria-controls="radix-:r33r:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex items-center justify-between whitespace-nowrap rounded-md border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&amp;&gt;span]:line-clamp-1 bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-muted)] focus:ring-[var(--color-accent)]/40 focus:ring-2 h-10 text-sm shadow-sm w-16"><span style="pointer-events: none;">15</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4 opacity-50" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><button type="button" role="combobox" aria-controls="radix-:r33t:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="flex items-center justify-between whitespace-nowrap rounded-md border px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&amp;&gt;span]:line-clamp-1 bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-muted)] focus:ring-[var(--color-accent)]/40 focus:ring-2 h-10 text-sm shadow-sm w-20"><span style="pointer-events: none;">AM</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4 opacity-50" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button></div></div><button class="hover:text-red-400" style="margin-left: auto; padding-top: 18px; background: none; border: none; cursor: pointer; color: var(--color-muted); font-size: 16px; line-height: 1;">✕</button></div><div style="display: flex; align-items: center; gap: 6px;"><button type="button" role="checkbox" aria-checked="true" data-state="checked" value="on" class="peer shrink-0 rounded-sm border shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:text-primary-foreground border-[var(--color-border)] data-[state=checked]:bg-[var(--color-accent)] data-[state=checked]:border-[var(--color-accent)] h-4 w-4" id="u-1774919543948.2227"><span data-state="checked" class="flex items-center justify-center text-current" style="pointer-events: none;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check h-4 w-4"><path d="M20 6 9 17l-5-5"></path></svg></span></button><label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="u-1774919543948.2227" style="font-size: 13px; color: var(--color-secondary); cursor: pointer;">Unpaid break <span style="color: var(--color-muted); font-size: 12px;">(deducted from hours)</span></label></div></div><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground rounded-md px-3 h-8 text-xs mt-1" style="border-color: var(--color-border); color: var(--color-secondary);">+ Add break</button></div></div></div><div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--color-border-light); display: flex; align-items: center; justify-content: space-between;"><div><div style="font-family: &quot;DM Mono&quot;, monospace;"><span style="font-size: 20px; font-weight: 600; color: var(--color-accent);">8h 0m</span><span style="font-size: 12px; color: var(--color-muted); margin-left: 8px;">8.00 hrs</span></div></div><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-primary text-primary-foreground shadow hover:bg-primary/90 py-2 h-9 px-5 text-sm font-semibold disabled:opacity-40" style="background: var(--color-accent); color: rgb(255, 255, 255);">Log Hours</button></div></div></div><div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0px 2px;"><p style="font-size: 12px; color: var(--color-muted);">17 entries</p><button style="display: flex; align-items: center; gap: 5px; background: none; border: 1px solid var(--color-border); border-radius: 6px; padding: 3px 10px; font-size: 12px; font-weight: 500; color: var(--color-secondary); cursor: pointer;">↓ Newest first</button></div><div style="margin-bottom: 28px;"><div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 0px 2px;"><h2 style="font-size: 17px; font-weight: 700; color: var(--color-text); font-family: Parkinsans, sans-serif; margin: 0px;">March 2026</h2><div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace;">$2,274.01</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 3px 12px; font-family: &quot;DM Mono&quot;, monospace; font-size: 12px; color: var(--color-accent); font-weight: 600;">132h 45m</div><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground rounded-md px-3 h-7 text-xs" style="border-color: var(--color-border); color: var(--color-secondary);">✦ Summarise</button><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground rounded-md px-3 h-7 text-xs" style="border-color: var(--color-border); color: var(--color-secondary);">Export XLSX</button></div></div><div style="margin-bottom: 14px;"><div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding: 0px 2px;"><p style="font-size: 11px; font-weight: 600; color: var(--color-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 0px;">Mar 22 – Mar 28</p><span style="font-size: 11px; color: var(--color-muted); font-family: &quot;DM Mono&quot;, monospace;">40h 45m</span></div><div style="display: flex; flex-direction: column; gap: 6px;"><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: 1px solid var(--color-border-light); cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Friday, March 27, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$145.60</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">8h 30m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-up" style="flex-shrink: 0;"><path d="m18 15-6-6-6 6"></path></svg></div><div class="entry-row" style="display: flex; align-items: center; gap: 10px; padding: 10px 18px; border-top: none; transition: background 0.15s;"><span style="font-size: 12px; color: var(--color-muted); white-space: nowrap; font-family: &quot;DM Mono&quot;, monospace; width: 130px; flex-shrink: 0;">9:00 AM – 7:00 PM</span><span style="flex: 1 1 0%; font-size: 13px; color: var(--color-muted); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">No description</span><span style="font-size: 11px; color: var(--color-muted); background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: 4px; padding: 2px 8px; white-space: nowrap; font-family: &quot;DM Mono&quot;, monospace; flex-shrink: 0;">−1h 30m</span><span style="font-size: 12px; font-weight: 500; color: var(--color-text-secondary); white-space: nowrap; font-family: &quot;DM Mono&quot;, monospace; flex-shrink: 0;">$146</span><span style="font-size: 13px; font-weight: 600; color: var(--color-text); white-space: nowrap; width: 52px; text-align: right; font-family: &quot;DM Mono&quot;, monospace; flex-shrink: 0;">8h 30m</span><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground rounded-md h-7 px-2 text-xs shrink-0" style="color: var(--color-muted);">Edit</button><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground rounded-md delete-btn h-7 px-2 text-xs shrink-0" title="Duplicate to today" style="opacity: 0; transition: opacity 0.15s; color: var(--color-muted);">⧉</button><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 rounded-md text-xs delete-btn h-7 w-7 p-0 shrink-0 hover:text-red-400 hover:bg-red-50" style="opacity: 0; transition: opacity 0.15s; color: var(--color-muted);">✕</button></div></div><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: 1px solid var(--color-border-light); cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Thursday, March 26, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$119.91</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">7h 0m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-up" style="flex-shrink: 0;"><path d="m18 15-6-6-6 6"></path></svg></div><div class="entry-row" style="display: flex; align-items: center; gap: 10px; padding: 10px 18px; border-top: none; transition: background 0.15s;"><span style="font-size: 12px; color: var(--color-muted); white-space: nowrap; font-family: &quot;DM Mono&quot;, monospace; width: 130px; flex-shrink: 0;">9:00 AM – 4:30 PM</span><span style="flex: 1 1 0%; font-size: 13px; color: var(--color-muted); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">No description</span><span style="font-size: 11px; color: var(--color-muted); background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: 4px; padding: 2px 8px; white-space: nowrap; font-family: &quot;DM Mono&quot;, monospace; flex-shrink: 0;">−0h 30m</span><span style="font-size: 12px; font-weight: 500; color: var(--color-text-secondary); white-space: nowrap; font-family: &quot;DM Mono&quot;, monospace; flex-shrink: 0;">$120</span><span style="font-size: 13px; font-weight: 600; color: var(--color-text); white-space: nowrap; width: 52px; text-align: right; font-family: &quot;DM Mono&quot;, monospace; flex-shrink: 0;">7h 0m</span><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground rounded-md h-7 px-2 text-xs shrink-0" style="color: var(--color-muted);">Edit</button><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground rounded-md delete-btn h-7 px-2 text-xs shrink-0" title="Duplicate to today" style="opacity: 0; transition: opacity 0.15s; color: var(--color-muted);">⧉</button><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 rounded-md text-xs delete-btn h-7 w-7 p-0 shrink-0 hover:text-red-400 hover:bg-red-50" style="opacity: 0; transition: opacity 0.15s; color: var(--color-muted);">✕</button></div></div><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Wednesday, March 25, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$154.17</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">9h 0m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Tuesday, March 24, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$141.32</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">8h 15m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Monday, March 23, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$137.04</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">8h 0m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div></div></div><div style="margin-bottom: 14px;"><div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding: 0px 2px;"><p style="font-size: 11px; font-weight: 600; color: var(--color-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 0px;">Mar 15 – Mar 21</p><span style="font-size: 11px; color: var(--color-muted); font-family: &quot;DM Mono&quot;, monospace;">30h 0m</span></div><div style="display: flex; flex-direction: column; gap: 6px;"><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Friday, March 20, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$124.19</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">7h 15m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Thursday, March 19, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$132.76</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">7h 45m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Wednesday, March 18, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$132.76</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">7h 45m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Tuesday, March 17, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$124.19</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">7h 15m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div></div></div><div style="margin-bottom: 14px;"><div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding: 0px 2px;"><p style="font-size: 11px; font-weight: 600; color: var(--color-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 0px;">Mar 8 – Mar 14</p><span style="font-size: 11px; color: var(--color-muted); font-family: &quot;DM Mono&quot;, monospace;">30h 30m</span></div><div style="display: flex; flex-direction: column; gap: 6px;"><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Friday, March 13, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$124.19</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">7h 15m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Thursday, March 12, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$132.76</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">7h 45m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Wednesday, March 11, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$132.76</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">7h 45m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Tuesday, March 10, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$132.76</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">7h 45m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div></div></div><div style="margin-bottom: 14px;"><div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding: 0px 2px;"><p style="font-size: 11px; font-weight: 600; color: var(--color-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 0px;">Mar 1 – Mar 7</p><span style="font-size: 11px; color: var(--color-muted); font-family: &quot;DM Mono&quot;, monospace;">31h 30m</span></div><div style="display: flex; flex-direction: column; gap: 6px;"><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Friday, March 6, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$128.47</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">7h 30m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Thursday, March 5, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$141.32</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">8h 15m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Wednesday, March 4, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$149.89</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">8h 45m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div><div class="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden" style="background: var(--color-surface); border-color: var(--color-border);"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-surface-raised); border-bottom: none; cursor: pointer; user-select: none;"><div style="flex: 1 1 0%; min-width: 0px;"><p style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: Parkinsans, sans-serif; margin: 0px;">Tuesday, March 3, 2026</p></div><span style="font-size: 11px; color: var(--color-muted); white-space: nowrap;">1 session</span><span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); font-family: &quot;DM Mono&quot;, monospace; white-space: nowrap;">$119.91</span><div style="background: var(--color-accent-light); border: 1px solid var(--color-accent-border); border-radius: 20px; padding: 2px 10px; font-family: &quot;DM Mono&quot;, monospace; font-size: 11px; color: var(--color-accent); font-weight: 600; white-space: nowrap;">7h 0m</div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" style="flex-shrink: 0;"><path d="m6 9 6 6 6-6"></path></svg></div></div></div></div></div><input type="file" accept=".json" style="display: none;"><input type="file" accept=".json" style="display: none;"></div></div></div>
+    <script type="module" src="/src/main.jsx"></script>
+  
+
+</body></html>

@@ -12,18 +12,8 @@ import {
 
 function FieldRow({ label, children, hint }) {
   return (
-    <div style={{
-      display: "grid",
-      gridTemplateColumns: "140px 1fr",
-      columnGap: 24,
-      alignItems: "start",
-      paddingTop: 14,
-      paddingBottom: 14,
-      borderBottom: "1px solid var(--color-border-light)",
-    }}
-      className="last:border-0"
-    >
-      <div style={{ paddingTop: 8 }}>
+    <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-start gap-x-6 gap-y-1.5 py-3.5 border-b border-[var(--color-border-light)] last:border-0">
+      <div className="sm:pt-2">
         <p style={{ fontSize: 13, fontWeight: 500, color: "var(--color-secondary)", margin: 0 }}>{label}</p>
         {hint && <p style={{ fontSize: 11, color: "var(--color-muted)", marginTop: 2 }}>{hint}</p>}
       </div>
@@ -51,8 +41,8 @@ function TemplateEditor({ value, onChange, onAddBreak, onChangeBreak, onRemoveBr
   const inputCls = "bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] placeholder:text-[var(--color-muted)] focus-visible:ring-[var(--color-accent)]/40 focus-visible:ring-2 text-sm shadow-sm h-9";
   return (
     <div style={{ background: "var(--color-surface-raised)", border: "1px solid var(--color-border)", borderRadius: 10, padding: "14px 16px", marginTop: 8 }}>
-      <div style={{ display: "flex", gap: 10, marginBottom: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
-        <div style={{ flex: "1 1 160px" }}>
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2 mb-2.5 items-end">
+        <div>
           <p style={{ fontSize: 11, color: "var(--color-muted)", fontWeight: 500, marginBottom: 4 }}>Name</p>
           <Input value={value.name || ""} onChange={(e) => onChange({ name: e.target.value })} placeholder="e.g. Regular day" className={inputCls} />
         </div>
@@ -140,7 +130,8 @@ export default function SettingsModal() {
   return (
     <div
       onClick={() => setShowSettings(false)}
-      style={{ position: "fixed", inset: 0, background: "var(--color-modal-overlay)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
+      style={{ background: "var(--color-modal-overlay)" }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -148,7 +139,7 @@ export default function SettingsModal() {
         style={{ background: "var(--color-modal)", borderRadius: 16, width: "100%", maxWidth: 580, boxShadow: "var(--color-modal-shadow)", overflow: "hidden", display: "flex", flexDirection: "column", maxHeight: "calc(100vh - 48px)" }}
       >
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 0", flexShrink: 0 }}>
+        <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-0 flex-shrink-0">
           <div>
             <p style={{ fontSize: 16, fontWeight: 700, color: "var(--color-text)", fontFamily: "'Parkinsans', sans-serif", margin: 0 }}>Settings</p>
             <p style={{ fontSize: 13, color: "var(--color-muted)", marginTop: 2 }}>Saved to your account.</p>
@@ -157,7 +148,7 @@ export default function SettingsModal() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: "flex", gap: 2, padding: "12px 24px 0", borderBottom: "1px solid var(--color-border-light)", flexShrink: 0 }}>
+        <div className="flex gap-0.5 px-4 sm:px-6 pt-3 pb-0 border-b flex-shrink-0" style={{ borderBottomColor: "var(--color-border-light)" }}>
           {TABS.map((t) => (
             <button key={t} onClick={() => setTab(t)} style={{
               padding: "6px 14px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600,
@@ -171,7 +162,7 @@ export default function SettingsModal() {
         </div>
 
         {/* Body */}
-        <div style={{ overflowY: "auto", padding: "8px 24px 4px", flex: 1 }}>
+        <div className="overflow-y-auto px-4 sm:px-6 py-2 flex-1">
 
           {/* ── PROFILE TAB ── */}
           {tab === "profile" && (
@@ -389,7 +380,7 @@ export default function SettingsModal() {
         </div>
 
         {/* Footer */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", padding: "14px 24px 18px", borderTop: "1px solid var(--color-border-light)", flexShrink: 0, gap: 8 }}>
+        <div className="flex items-center justify-end px-4 sm:px-6 py-3.5 border-t flex-shrink-0 gap-2" style={{ borderTopColor: "var(--color-border-light)" }}>
           <Button variant="ghost" size="sm" onClick={() => setShowSettings(false)} className="h-9 px-4 text-sm" style={{ color: "var(--color-secondary)" }}>Cancel</Button>
           <Button size="sm" onClick={saveSettings} className="h-9 px-5 text-sm font-semibold" style={{ background: "var(--color-accent)", color: "#fff" }}>Save</Button>
         </div>
