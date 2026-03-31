@@ -70,14 +70,14 @@
   --color-muted: rgba(180, 185, 230, 0.32);
   --color-secondary: rgba(195, 200, 240, 0.52);
 
-  /* ── Accent — indigo (10%) ── */
-  --color-accent: #818cf8;
-  --color-accent-hover: #a5b0ff;
-  --color-accent-light: rgba(99, 102, 241, 0.14);
-  --color-accent-light-hover: rgba(99, 102, 241, 0.24);
-  --color-accent-border: rgba(129, 140, 248, 0.4);
-  --color-accent-text: #c7d2fe;
-  --color-accent-bright: #6366f1;
+  /* ── Accent — electric blue (10%) ── */
+  --color-accent: #38bdf8;
+  --color-accent-hover: #7dd3fc;
+  --color-accent-light: rgba(14, 165, 233, 0.14);
+  --color-accent-light-hover: rgba(14, 165, 233, 0.24);
+  --color-accent-border: rgba(56, 189, 248, 0.4);
+  --color-accent-text: #bae6fd;
+  --color-accent-bright: #0ea5e9;
 
   /* ── Nav glass ── */
   --color-nav: rgba(255, 255, 255, 0.05);
@@ -91,8 +91,8 @@
   --color-input-bg: rgba(255, 255, 255, 0.05);
 
   /* ── Tags ── */
-  --color-tag-bg: rgba(99, 102, 241, 0.13);
-  --color-tag-text: rgba(195, 200, 240, 0.65);
+  --color-tag-bg: rgba(14, 165, 233, 0.13);
+  --color-tag-text: rgba(186, 230, 253, 0.75);
 
   /* ── Status ── */
   --color-danger: #f87171;
@@ -104,20 +104,20 @@
   --color-success: #4ade80;
 
   /* ── Component helpers ── */
-  --color-toggle-shadow: 0 0 0 1px rgba(129, 140, 248, 0.25),
+  --color-toggle-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25),
                          inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --color-modal-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07),
                         0 32px 80px rgba(0, 0, 10, 0.85),
                         inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-/* ── 60% — aurora background (indigo bursts behind the glass) ── */
+/* ── 60% — aurora background (electric blue bursts behind the glass) ── */
 html.dark body {
   background-color: #07080f;
   background-image:
-    radial-gradient(ellipse 110% 65% at 105%   0%, rgba(99, 102, 241, 0.30) 0%, transparent 52%),
-    radial-gradient(ellipse  75% 60% at  -5% 105%, rgba(139, 92, 246, 0.22) 0%, transparent 52%),
-    radial-gradient(ellipse  45% 35% at  55%  35%, rgba(79,  70, 229, 0.09) 0%, transparent 60%);
+    radial-gradient(ellipse 110% 65% at 105%   0%, rgba(14, 165, 233, 0.28) 0%, transparent 52%),
+    radial-gradient(ellipse  75% 60% at  -5% 105%, rgba(56, 189, 248, 0.16) 0%, transparent 52%),
+    radial-gradient(ellipse  45% 35% at  55%  35%, rgba(2,  132, 199, 0.10) 0%, transparent 60%);
   min-height: 100vh;
 }
 
