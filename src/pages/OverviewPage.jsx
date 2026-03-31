@@ -39,6 +39,7 @@ export default function OverviewPage() {
     weeklyTarget,
     exportMonthXLSX,
     setShowInvoice,
+    googleToken, googleTokenExpiry, exportToGoogleSheets, connectGoogleSheets,
   } = useApp();
   const { theme } = useTheme();
   const dark = theme === "dark";
@@ -226,6 +227,17 @@ export default function OverviewPage() {
               }`}
             >
               Invoice
+            </button>
+            <button
+              disabled={monthEntries.length === 0}
+              onClick={() => exportToGoogleSheets(monthStr, monthEntries)}
+              className={`text-xs font-medium px-3 py-2 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                dark
+                  ? "border-slate-600 text-slate-200 hover:enabled:border-slate-500 hover:enabled:text-white bg-transparent"
+                  : "border-slate-300 text-slate-600 hover:enabled:border-slate-400 hover:enabled:text-slate-800 bg-transparent"
+              }`}
+            >
+              {googleToken && Date.now() < googleTokenExpiry ? "Export to Sheets" : "Connect Sheets"}
             </button>
           </div>
         </div>

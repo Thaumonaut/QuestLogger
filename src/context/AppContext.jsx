@@ -58,6 +58,10 @@ export function AppProvider({ session, children }) {
   const [monthSummaries, setMonthSummaries] = useState({});
   const [rewritingDesc, setRewritingDesc] = useState(false);
 
+  // ── Google Sheets ────────────────────────────────────────────
+  const [googleToken, setGoogleToken] = useState(null);
+  const [googleTokenExpiry, setGoogleTokenExpiry] = useState(0);
+
   // ── Invoice modal ────────────────────────────────────────────
   const [showInvoice, setShowInvoice] = useState(false);
 
@@ -86,6 +90,8 @@ export function AppProvider({ session, children }) {
       setTimeRounding(settingsRes.data?.time_rounding || "none");
       setDailyTarget(settingsRes.data?.daily_target ?? 0);
       setWeeklyTarget(settingsRes.data?.weekly_target ?? 0);
+      setGoogleToken(settingsRes.data?.google_access_token ?? null);
+      setGoogleTokenExpiry(settingsRes.data?.google_token_expiry ?? 0);
       setForm(makeEmptyForm(loadedSettings, loadedTemplates));
       setLoading(false);
       try {
@@ -122,6 +128,19 @@ export function AppProvider({ session, children }) {
     const interval = setInterval(checkReminder, 60_000);
     return () => clearInterval(interval);
   }, [reminderTime, session, entries]);
+
+  // ── Capture Google provider_token after Sheets OAuth redirect ─
+  useEffect(() => {
+    if (!session?.provider_token || !session?.user?.id) return;
+    const expiry = Date.now() + 3500 * 1000;
+    setGoogleToken(session.provider_token);
+    setGoogleTokenExpiry(expiry);
+    supabase.from("user_settings").upsert({
+      user_id: session.user.id,
+      google_access_token: session.provider_token,
+      google_token_expiry: expiry,
+    });
+  }, [session?.provider_token]);
 
   // ── Clock tick ───────────────────────────────────────────────
   useEffect(() => {
@@ -793,6 +812,74 @@ export function AppProvider({ session, children }) {
     };
   }, [entries, hourlyRate, earningsPeriod]);
 
+  // ── Google Sheets ─────────────────────────────────────────────
+  function connectGoogleSheets() {
+    supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        scopes: "https://www.googleapis.com/auth/spreadsheets",
+        queryParams: { access_type: "offline", prompt: "consent" },
+        redirectTo: window.location.href,
+      },
+    });
+  }
+
+  async function disconnectGoogleSheets() {
+    setGoogleToken(null);
+    setGoogleTokenExpiry(0);
+    await supabase.from("user_settings").update({
+      google_access_token: null,
+      google_token_expiry: null,
+    }).eq("user_id", session.user.id);
+  }
+
+  async function exportToGoogleSheets(monthStr, monthEntries) {
+    if (!googleToken || Date.now() > googleTokenExpiry) {
+      connectGoogleSheets();
+      return;
+    }
+    const monthDate = new Date(monthStr + "-01");
+    const monthLabel = monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    const title = `QuestLogger${settings.name ? ` — ${settings.name}` : ""} — ${monthLabel}`;
+
+    const headers = ["Date", "Day", "Project", "Description", "Start", "End", "Duration (h)", "Break (min)", "Billable", "Earnings"];
+    const dataRows = [...monthEntries]
+      .sort((a, b) => a.date.localeCompare(b.date) || (a.start || "").localeCompare(b.start || ""))
+      .map((e) => {
+        const proj = projects.find((p) => p.id === e.project_id);
+        const dayName = new Date(e.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short" });
+        const breakMins = unpaidBreakMins(e);
+        const billable = e.billable !== false;
+        const earnings = billable && hourlyRate > 0 ? Math.round((e.minutes / 60) * hourlyRate * 100) / 100 : "";
+        return [e.date, dayName, proj?.name || "", e.description || "", toDisplayTime(e.start), toDisplayTime(e.end), Math.round(e.minutes / 60 * 100) / 100, breakMins, billable ? "Yes" : "No", earnings];
+      });
+
+    const toCell = (cell) => typeof cell === "number"
+      ? { userEnteredValue: { numberValue: cell } }
+      : { userEnteredValue: { stringValue: String(cell ?? "") } };
+
+    const res = await fetch("https://sheets.googleapis.com/v4/spreadsheets", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${googleToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        properties: { title },
+        sheets: [{
+          properties: { title: "Entries" },
+          data: [{ startRow: 0, startColumn: 0, rowData: [headers, ...dataRows].map((row) => ({ values: row.map(toCell) })) }],
+        }],
+      }),
+    });
+
+    if (!res.ok) {
+      if (res.status === 401) { connectGoogleSheets(); return; }
+      flash("✗ Google Sheets export failed");
+      return;
+    }
+    const data = await res.json();
+    window.open(data.spreadsheetUrl, "_blank");
+    flash("✓ Opened in Google Sheets");
+  }
+
   const value = {
     // data
     session, entries, projects, settings, templates, loading,
@@ -830,6 +917,8 @@ export function AppProvider({ session, children }) {
     showInvoice, setShowInvoice,
     // computed
     todayMins, grouped,
+    // google sheets
+    googleToken, googleTokenExpiry, connectGoogleSheets, disconnectGoogleSheets, exportToGoogleSheets,
     // export/import
     exportAllCSV, exportMonthCSV, exportAllXLSX, exportMonthXLSX,
     importFromLocalStorage, importEntriesFromFile, exportProfile, importProfileFromFile,

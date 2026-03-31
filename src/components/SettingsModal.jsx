@@ -119,6 +119,7 @@ export default function SettingsModal() {
     setDraftNewProject, setDraftEditingProjectId,
     importEntriesRef, importProfileRef,
     exportAllXLSX, exportProfile, setShowInvoice,
+    googleToken, googleTokenExpiry, connectGoogleSheets, disconnectGoogleSheets,
   } = useApp();
 
   const [tab, setTab] = useState("profile");
@@ -192,6 +193,32 @@ export default function SettingsModal() {
                     <span style={{ fontSize: 11, color: "var(--color-success)" }}>✓ Allowed</span>
                   )}
                 </div>
+              </FieldRow>
+
+              <p style={{ fontSize: 11, fontWeight: 600, color: "var(--color-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 20, marginBottom: 0 }}>Integrations</p>
+              <FieldRow label="Google Sheets" hint="Export months directly to a new Google Sheet">
+                {googleToken && Date.now() < googleTokenExpiry ? (
+                  <div className="flex items-center gap-3">
+                    <span style={{ fontSize: 13, color: "var(--color-success)", display: "flex", alignItems: "center", gap: 5 }}>
+                      <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--color-success)", display: "inline-block" }} />
+                      Connected
+                    </span>
+                    <button onClick={disconnectGoogleSheets} style={{ fontSize: 12, color: "var(--color-muted)", background: "none", border: "none", cursor: "pointer" }} className="hover:text-red-400">Disconnect</button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={connectGoogleSheets}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 500, padding: "6px 14px", borderRadius: 8, border: "1px solid var(--color-border)", background: "var(--color-surface-raised)", color: "var(--color-text)", cursor: "pointer" }}
+                    className="hover:border-[var(--color-accent)] transition-colors"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M14 3H7C5.9 3 5 3.9 5 5V19C5 20.1 5.9 21 7 21H17C18.1 21 19 20.1 19 19V8L14 3Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M14 3V8H19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M9 13H15M9 17H15M9 9H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Connect Google Sheets
+                  </button>
+                )}
               </FieldRow>
 
               <p style={{ fontSize: 11, fontWeight: 600, color: "var(--color-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 20, marginBottom: 0 }}>AI</p>
