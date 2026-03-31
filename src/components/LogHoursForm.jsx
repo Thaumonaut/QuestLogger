@@ -12,7 +12,6 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-
 export default function LogHoursForm() {
   const {
     form, setForm, setField, addBreak, updateBreak, removeBreak,
@@ -25,9 +24,8 @@ export default function LogHoursForm() {
   const { theme } = useTheme();
   const dark = theme === "dark";
 
-  const [mode, setMode] = useState("manual"); // "manual" | "auto"
+  const [mode, setMode] = useState("manual");
 
-  // When clock in exists, switch to auto mode
   useEffect(() => {
     if (clockIn) setMode("auto");
   }, [clockIn]);
@@ -42,60 +40,65 @@ export default function LogHoursForm() {
 
   const previewMins = calcWorked(form.start, form.end, form.breaks);
 
-  const inputCls = "bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] placeholder:text-[var(--color-muted)] focus-visible:ring-[var(--color-accent)]/40 focus-visible:ring-2 text-sm shadow-sm";
-  const btnToggleBase = "px-3 py-1.5 rounded-md text-xs font-semibold border-none cursor-pointer transition-colors";
-
   const subCardCls = `p-6 rounded-xl border transition-all ${
     dark ? "bg-slate-800/30 border-slate-700/50" : "bg-slate-50/50 border-slate-200/50"
+  }`;
+  
+  const inputClass = `w-full px-4 py-3 rounded-lg text-sm transition-all focus:outline-none focus:ring-2 ${
+    dark
+      ? "bg-slate-900/50 border border-slate-700/50 text-white placeholder:text-slate-500 focus:border-cyan-500 focus:ring-cyan-500/20"
+      : "bg-white/80 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:ring-blue-100"
+  }`;
+
+  const selectTriggerClass = `w-full h-auto px-4 py-3 rounded-lg text-sm transition-all focus:outline-none focus:ring-2 ${
+    dark
+      ? "bg-slate-900/50 border border-slate-700/50 text-white focus:border-cyan-500 focus:ring-cyan-500/20"
+      : "bg-white/80 border border-slate-200 text-slate-800 focus:border-blue-400 focus:ring-blue-100"
   }`;
 
   return (
     <div
       ref={logHoursRef}
-      className={`relative overflow-hidden rounded-2xl border mb-8 ${
+      className={`relative overflow-hidden rounded-2xl border transition-all mb-8 ${
         dark
           ? "bg-slate-900/50 backdrop-blur-2xl border-cyan-500/20 shadow-[0_8px_32px_rgba(6,182,212,0.15)]"
           : "bg-white/60 backdrop-blur-xl border-blue-200/50 shadow-xl shadow-blue-500/5"
       }`}
     >
-      {/* Gradient overlay */}
       <div className={`absolute inset-0 bg-gradient-to-br pointer-events-none ${
         dark ? "from-cyan-500/5 via-transparent to-purple-500/5" : "from-blue-500/5 via-transparent to-purple-500/5"
       }`} />
 
-      <div className="relative p-6 sm:p-8">
+      <div className="relative p-5 sm:p-8">
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-          <h2 style={{
-            fontSize: 22,
-            fontWeight: 600,
-            margin: 0,
-            fontFamily: "'Parkinsans', sans-serif",
-            ...(dark ? {
-              background: "linear-gradient(to right, #22d3ee, #2dd4bf, #34d399)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            } : { color: "var(--color-text)" }),
-          }}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+          <h2
+            className={`text-2xl font-semibold bg-gradient-to-r bg-clip-text text-transparent ${
+              dark
+                ? "from-cyan-400 via-teal-400 to-emerald-400"
+                : "from-teal-600 to-emerald-600"
+            }`}
+          >
             Log Hours
           </h2>
-          {/* Auto / Manual toggle */}
-          <div style={{ display: "flex", background: "var(--color-tag-bg)", borderRadius: 8, padding: 3, gap: 2 }}>
+          
+          <div className={`flex p-1 rounded-lg ${dark ? "bg-slate-800/50" : "bg-slate-100/80"} border ${dark ? "border-slate-700/50" : "border-slate-200/50"}`}>
             {["manual", "auto"].map((m) => (
               <button
                 key={m}
                 onClick={() => !clockIn && setMode(m)}
                 disabled={!!clockIn}
-                className={btnToggleBase}
-                style={{
-                  background: mode === m ? "var(--color-surface)" : "transparent",
-                  color: mode === m ? "var(--color-accent)" : "var(--color-muted)",
-                  boxShadow: mode === m ? "var(--color-toggle-shadow)" : "none",
-                  cursor: clockIn ? "default" : "pointer",
-                }}
+                className={`px-4 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition-all ${
+                  mode === m
+                    ? dark
+                      ? "bg-slate-700 text-cyan-400 shadow-sm"
+                      : "bg-white text-teal-600 shadow-sm border border-slate-200/50"
+                    : dark
+                    ? "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
+                    : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
+                } ${clockIn ? "cursor-default opacity-60" : "cursor-pointer"}`}
               >
-                {m === "manual" ? "Manual" : "Auto"}
+                {m === "manual" ? "Manual" : "Automatic"}
               </button>
             ))}
           </div>
@@ -103,190 +106,201 @@ export default function LogHoursForm() {
 
         {/* ── AUTO MODE ── */}
         {mode === "auto" && (
-          <>
+          <div className="py-4">
             {!clockIn ? (
-              <div style={{ padding: "24px 0 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, textAlign: "center" }}>
-                <div style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--color-accent-light)", border: "2px solid var(--color-accent-border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
-                  ⏱
+              <div className="flex flex-col items-center gap-5 text-center py-6 sm:py-10">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-lg ${
+                  dark ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-400" : "bg-teal-50 border-teal-100 text-teal-600"
+                } border-2`}>
+                  <Clock className="w-8 h-8" />
                 </div>
                 <div>
-                  <p style={{ fontSize: 15, fontWeight: 600, color: "var(--color-text)", margin: 0 }}>Ready to start?</p>
-                  <p style={{ fontSize: 13, color: "var(--color-muted)", marginTop: 4 }}>
+                  <p className={`text-base font-semibold mb-1 ${dark ? "text-white" : "text-slate-800"}`}>Ready to start?</p>
+                  <p className={`text-sm max-w-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>
                     Clock in to start tracking time automatically.
                     {timeRounding !== "none" && ` Times will be rounded to ${timeRounding} min.`}
                   </p>
                 </div>
                 <Button
                   onClick={handleClockIn}
-                  className="h-10 px-8 text-sm font-semibold"
-                  style={{ background: "var(--color-accent)", color: "#fff" }}
+                  className={`px-8 py-2.5 rounded-xl text-sm font-semibold shadow-lg transition-all ${
+                    dark
+                      ? "bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:from-cyan-400 hover:to-teal-400"
+                      : "bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-teal-500/30 hover:from-teal-700 hover:to-emerald-700"
+                  }`}
                 >
                   Clock In
                 </Button>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                {/* Timer header */}
-                <div style={{
-                  background: "var(--color-accent-light)",
-                  border: "1px solid var(--color-accent-border)",
-                  borderRadius: 12,
-                  padding: "16px 20px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  marginBottom: 16,
-                  flexWrap: "wrap",
-                }}>
+              <div className="flex flex-col gap-5">
+                <div className={`p-5 sm:p-6 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 border ${
+                  dark ? "bg-cyan-950/30 border-cyan-500/20" : "bg-teal-50 border-teal-100"
+                }`}>
                   <div>
-                    <p style={{ fontSize: 26, fontWeight: 700, color: "var(--color-accent)", fontFamily: "'DM Mono', monospace", lineHeight: 1, margin: 0 }}>
+                    <p className={`text-3xl sm:text-4xl font-bold font-mono leading-none tracking-tight mb-2 ${
+                      dark ? "text-cyan-400" : "text-teal-600"
+                    }`}>
                       {clockedElapsed()}
                     </p>
-                    <p style={{ fontSize: 12, color: "var(--color-accent-text)", marginTop: 5 }}>
+                    <p className={`text-xs sm:text-sm font-medium ${dark ? "text-cyan-400/70" : "text-teal-700/70"}`}>
                       Clocked in at {toDisplayTime(clockIn.start)}
                       {clockIn.date !== todayStr() ? ` · ${clockIn.date}` : ""}
                     </p>
                   </div>
                   <Button
                     onClick={onClockOut}
-                    className="h-9 px-5 text-sm font-semibold"
-                    style={{ background: "var(--color-accent)", color: "#fff" }}
+                    className={`w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold shadow-lg transition-all ${
+                      dark
+                        ? "bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-red-500/20 hover:shadow-red-500/40 hover:from-red-400 hover:to-orange-400 text-white border-none"
+                        : "bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-red-500/20 hover:from-red-700 hover:to-orange-700 text-white border-none"
+                    }`}
                   >
                     Clock Out
                   </Button>
                 </div>
 
-                <div style={{ paddingBottom: 14, borderBottom: "1px solid var(--color-border-light)" }}>
-                  <p style={{ fontSize: 12, fontWeight: 500, color: "var(--color-secondary)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    What are you working on?
-                  </p>
-                  <Textarea
-                    value={clockIn.description || ""}
-                    onChange={(e) => updateClockIn({ description: e.target.value })}
-                    placeholder="Describe your work…"
-                    rows={2}
-                    className={`${inputCls} resize-none`}
-                  />
-                </div>
-
-                <div style={{ paddingTop: 14, paddingBottom: 14, borderBottom: "1px solid var(--color-border-light)", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                  {projects.length > 0 && (
-                    <Select
-                      value={clockIn.projectId ? String(clockIn.projectId) : "__none__"}
-                      onValueChange={(v) => updateClockIn({ projectId: v === "__none__" ? null : v })}
-                    >
-                      <SelectTrigger className={`${inputCls} w-44 h-9`}><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text)]">
-                        <SelectItem value="__none__" className="focus:bg-[var(--color-accent-light)]">No project</SelectItem>
-                        {projects.map((p) => (
-                          <SelectItem key={p.id} value={String(p.id)} className="focus:bg-[var(--color-accent-light)]">
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                              <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color || "#14b8a6", display: "inline-block" }} />
-                              {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <Checkbox
-                      id="clock-billable"
-                      checked={clockIn.billable !== false}
-                      onCheckedChange={(v) => updateClockIn({ billable: !!v })}
-                      className="border-[var(--color-border)] data-[state=checked]:bg-[var(--color-accent)] data-[state=checked]:border-[var(--color-accent)] h-4 w-4"
-                    />
-                    <Label htmlFor="clock-billable" style={{ fontSize: 13, color: "var(--color-secondary)", cursor: "pointer" }}>
-                      Billable
-                    </Label>
+                <div className="flex flex-col gap-4 mt-2">
+                  <div className={subCardCls}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Clock className={`w-5 h-5 ${dark ? "text-teal-400" : "text-teal-600"}`} />
+                      <h3 className={`font-semibold ${dark ? "text-white" : "text-slate-800"}`}>Details</h3>
+                    </div>
+                    <div className="space-y-3">
+                      <Textarea
+                        value={clockIn.description || ""}
+                        onChange={(e) => updateClockIn({ description: e.target.value })}
+                        placeholder="What are you working on?"
+                        rows={2}
+                        className={`${inputClass} resize-none min-h-[50px]`}
+                      />
+                      {projects.length > 0 && (
+                        <Select
+                          value={clockIn.projectId ? String(clockIn.projectId) : "__none__"}
+                          onValueChange={(v) => updateClockIn({ projectId: v === "__none__" ? null : v })}
+                        >
+                          <SelectTrigger className={selectTriggerClass}><SelectValue /></SelectTrigger>
+                          <SelectContent className={dark ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-200 text-slate-800"}>
+                            <SelectItem value="__none__">No project</SelectItem>
+                            {projects.map((p) => (
+                              <SelectItem key={p.id} value={String(p.id)}>
+                                <span className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full" style={{ background: p.color || "#14b8a6" }} />
+                                  {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      
+                      <label className="flex items-center gap-2 cursor-pointer mt-3">
+                        <Checkbox
+                          id="clock-billable"
+                          checked={clockIn.billable !== false}
+                          onCheckedChange={(v) => updateClockIn({ billable: !!v })}
+                          className={`w-5 h-5 rounded border-2 cursor-pointer transition-all ${
+                            dark
+                              ? "border-slate-700 data-[state=checked]:bg-gradient-to-br data-[state=checked]:from-cyan-500 data-[state=checked]:to-teal-500 data-[state=checked]:border-cyan-500"
+                              : "border-slate-300 data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
+                          }`}
+                        />
+                        <span className={`text-sm font-medium ${dark ? "text-slate-300" : "text-slate-600"}`}>Billable</span>
+                      </label>
+                    </div>
                   </div>
-                </div>
 
-                {/* Breaks */}
-                <div style={{ paddingTop: 14 }}>
-                  <p style={{ fontSize: 12, fontWeight: 500, color: "var(--color-secondary)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    Breaks
-                  </p>
-                  {(clockIn.breaks || []).length > 0 && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
-                      {(clockIn.breaks || []).map((b) => {
-                        const [sh, sm] = b.start.split(":").map(Number);
-                        const [eh, em] = b.end.split(":").map(Number);
-                        const mins = (eh * 60 + em) - (sh * 60 + sm);
-                        return (
-                          <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--color-secondary)" }}>
-                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--color-muted)", display: "inline-block", flexShrink: 0 }} />
-                            {toDisplayTime(b.start)} – {toDisplayTime(b.end)}
-                            <span style={{ color: "var(--color-muted)", fontSize: 12 }}>({mins}m)</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {clockIn.activeBreak ? (
-                    <div style={{ background: "var(--color-warn-bg)", border: "1px solid var(--color-warn-border)", borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                      <div>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: "var(--color-warn-text)", margin: 0 }}>
-                          On break · {breakElapsed()}
-                        </p>
-                        <p style={{ fontSize: 12, color: "var(--color-warn-muted)", marginTop: 2 }}>
-                          Started at {toDisplayTime(clockIn.activeBreak.start)}
-                        </p>
+                  {/* Breaks in auto mode */}
+                  <div className={subCardCls}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-semibold ${dark ? "text-white" : "text-slate-800"}`}>Breaks</span>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={endClockBreak}
-                        className="h-8 text-xs font-semibold"
-                        style={{ borderColor: "var(--color-warn-border)", color: "var(--color-warn-text)" }}
-                      >
-                        End Break
-                      </Button>
                     </div>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={startClockBreak}
-                      className="h-8 text-xs"
-                      style={{ borderColor: "var(--color-border)", color: "var(--color-secondary)" }}
-                    >
-                      + Start Break
-                    </Button>
-                  )}
+                    
+                    <div className="space-y-3">
+                      {(clockIn.breaks || []).length > 0 && (
+                        <div className="space-y-2 mb-4">
+                          {(clockIn.breaks || []).map((b) => {
+                            const [sh, sm] = b.start.split(":").map(Number);
+                            const [eh, em] = b.end.split(":").map(Number);
+                            const mins = (eh * 60 + em) - (sh * 60 + sm);
+                            return (
+                              <div key={b.id} className={`flex items-center gap-2 p-2.5 rounded-lg text-sm font-medium ${
+                                dark ? "bg-slate-800/50 text-slate-300" : "bg-slate-100 text-slate-600"
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${dark ? "bg-slate-500" : "bg-slate-400"}`} />
+                                {toDisplayTime(b.start)} – {toDisplayTime(b.end)}
+                                <span className={`ml-auto text-xs ${dark ? "text-slate-500" : "text-slate-400"}`}>({mins}m)</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      
+                      {clockIn.activeBreak ? (
+                        <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-inner ${
+                          dark ? "bg-orange-500/10 border-orange-500/20" : "bg-orange-50 border-orange-200"
+                        }`}>
+                          <div>
+                            <p className={`font-semibold ${dark ? "text-orange-400" : "text-orange-700"}`}>
+                              On break · {breakElapsed()}
+                            </p>
+                            <p className={`text-xs mt-0.5 ${dark ? "text-orange-400/60" : "text-orange-700/60"}`}>
+                              Started at {toDisplayTime(clockIn.activeBreak.start)}
+                            </p>
+                          </div>
+                          <Button
+                            onClick={endClockBreak}
+                            variant="outline"
+                            className={`px-4 text-xs font-bold border ${
+                              dark 
+                                ? "border-orange-500/30 text-orange-400 hover:bg-orange-500/20 bg-transparent" 
+                                : "border-orange-300 text-orange-700 hover:bg-orange-100 bg-white"
+                            }`}
+                          >
+                            End Break
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={startClockBreak}
+                          variant="outline"
+                          className={`w-full py-2.5 flex items-center justify-center gap-2 border-dashed ${
+                            dark 
+                              ? "border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" 
+                              : "border-slate-300 text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                          } bg-transparent`}
+                        >
+                          <Plus className="w-4 h-4" /> Start Break
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
 
         {/* ── MANUAL MODE ── */}
         {mode === "manual" && (
-          <>
+          <div className="flex flex-col gap-4 sm:gap-6 mt-2">
+            
             {/* Template picker */}
             {templates.length > 0 && (
-              <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid var(--color-border-light)" }}>
-                <p style={{ fontSize: 12, fontWeight: 500, color: "var(--color-secondary)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Templates</p>
-                <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex flex-col gap-2">
+                <p className={`text-xs font-semibold uppercase tracking-wider ${dark ? "text-slate-500" : "text-slate-400"}`}>Templates</p>
+                <div className="flex items-center gap-2 flex-wrap pb-2 mb-2 border-b border-transparent">
                   {templates.map((t) => (
                     <button
                       key={t.id}
                       onClick={() => applyTemplate(t)}
-                      style={{
-                        background: "var(--color-accent-light)",
-                        border: "1px solid var(--color-accent-border)",
-                        borderRadius: 20,
-                        padding: "4px 14px",
-                        fontSize: 12,
-                        fontWeight: 500,
-                        color: "var(--color-accent)",
-                        cursor: "pointer",
-                        whiteSpace: "nowrap",
-                        transition: "all 0.15s",
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-accent-light-hover)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "var(--color-accent-light)"; }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                        dark
+                          ? "bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-700 hover:border-cyan-500/30 hover:text-cyan-400"
+                          : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-blue-300 hover:text-blue-600 shadow-sm"
+                      }`}
                     >
                       {t.name}
                     </button>
@@ -295,159 +309,147 @@ export default function LogHoursForm() {
               </div>
             )}
 
-            {/* Two-column grid: Date+Time | Description+Project */}
-            <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12, marginBottom: 16 }}>
+            <div className="flex flex-col gap-4">
 
-              {/* Date & Time sub-card */}
+              {/* Date & Time block */}
               <div className={subCardCls}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                  <Calendar size={15} style={{ color: "var(--color-accent)", flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)" }}>Date & Time</span>
+                <div className="flex items-center gap-2 mb-5">
+                  <Calendar className={`w-5 h-5 ${dark ? "text-cyan-400" : "text-blue-600"}`} />
+                  <h3 className={`font-semibold ${dark ? "text-white" : "text-slate-800"}`}>Date & Time</h3>
                 </div>
 
-                {/* Date picker */}
-                <div style={{ marginBottom: 12 }}>
-                  <label
-                    style={{
-                      display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer",
-                      position: "relative", width: "100%",
-                      background: form.date ? "var(--color-accent-light)" : "var(--color-input-bg)",
-                      border: `1px solid ${form.date ? "var(--color-accent-border)" : "var(--color-border)"}`,
-                      borderRadius: 8, padding: "8px 12px", transition: "border-color 0.15s",
-                    }}
-                    onClick={() => dateInputRef.current?.showPicker()}
-                  >
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-xs font-medium mb-1.5 uppercase tracking-wide ${dark ? "text-slate-500" : "text-slate-500"}`}>Date</label>
                     <input
                       ref={dateInputRef}
                       type="date"
                       value={form.date}
                       onChange={(e) => setField("date", e.target.value)}
-                      style={{ position: "absolute", inset: 0, opacity: 0, width: "100%", height: "100%", cursor: "pointer", pointerEvents: "none" }}
+                      className={inputClass}
+                      onFocus={(e) => { e.currentTarget.style.borderColor = dark ? "var(--color-cyan-500)" : "var(--color-blue-400)" }}
                     />
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={form.date ? "var(--color-accent)" : "var(--color-muted)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, position: "relative", zIndex: 0 }}>
-                      <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
-                    {form.date ? (
-                      <div style={{ position: "relative", zIndex: 0 }}>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)", lineHeight: 1.2, margin: 0 }}>
-                          {new Date(form.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" })}
-                        </p>
-                        <p style={{ fontSize: 11, color: "var(--color-secondary)", margin: "2px 0 0" }}>
-                          {new Date(form.date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                        </p>
-                      </div>
-                    ) : (
-                      <p style={{ fontSize: 12, color: "var(--color-muted)", margin: 0, position: "relative", zIndex: 0 }}>Select a date</p>
-                    )}
-                  </label>
-                </div>
-
-                {/* Start / End times */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  <div>
-                    <p style={{ fontSize: 11, color: "var(--color-muted)", fontWeight: 500, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>Start</p>
-                    <TimeSelect value={form.start} onChange={(v) => setField("start", v)} />
                   </div>
-                  <div>
-                    <p style={{ fontSize: 11, color: "var(--color-muted)", fontWeight: 500, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>End</p>
-                    <TimeSelect value={form.end} onChange={(v) => setField("end", v)} />
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className={`block text-xs font-medium mb-1.5 uppercase tracking-wide ${dark ? "text-slate-500" : "text-slate-500"}`}>Start</label>
+                      <TimeSelect value={form.start} onChange={(v) => setField("start", v)} />
+                    </div>
+                    <div>
+                      <label className={`block text-xs font-medium mb-1.5 uppercase tracking-wide ${dark ? "text-slate-500" : "text-slate-500"}`}>End</label>
+                      <TimeSelect value={form.end} onChange={(v) => setField("end", v)} />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Details sub-card */}
+              {/* Details block */}
               <div className={subCardCls}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                  <Clock size={15} style={{ color: "var(--color-accent)", flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)" }}>Details</span>
+                <div className="flex items-center gap-2 mb-5">
+                  <Clock className={`w-5 h-5 ${dark ? "text-teal-400" : "text-teal-600"}`} />
+                  <h3 className={`font-semibold ${dark ? "text-white" : "text-slate-800"}`}>Details</h3>
                 </div>
 
-                {/* Description */}
-                <div style={{ position: "relative", marginBottom: 10 }}>
-                  <Textarea
-                    value={form.description}
-                    onChange={(e) => setField("description", e.target.value)}
-                    placeholder="What did you work on?"
-                    rows={3}
-                    className={`${inputCls} resize-none`}
-                  />
-                  {deepseekKey && form.description.trim() && (
-                    <button
-                      onClick={rewriteDescription}
-                      disabled={rewritingDesc}
-                      style={{
-                        position: "absolute", bottom: 8, right: 8,
-                        background: rewritingDesc ? "var(--color-accent-light)" : "var(--color-surface)",
-                        border: "1px solid var(--color-accent-border)",
-                        borderRadius: 6, padding: "3px 10px", fontSize: 11, fontWeight: 600,
-                        color: "var(--color-accent)", cursor: rewritingDesc ? "default" : "pointer",
-                        display: "flex", alignItems: "center", gap: 4,
-                      }}
-                    >
-                      {rewritingDesc ? (
-                        <><span style={{ display: "inline-block", width: 10, height: 10, border: "2px solid var(--color-accent-border)", borderTopColor: "var(--color-accent)", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />Rewriting…</>
-                      ) : "✦ Rewrite"}
-                    </button>
+                <div className="space-y-4">
+                  <div className="relative">
+                    <label className={`block text-xs font-medium mb-1.5 uppercase tracking-wide hidden ${dark ? "text-slate-500" : "text-slate-500"}`}>Description</label>
+                    <Textarea
+                      value={form.description}
+                      onChange={(e) => setField("description", e.target.value)}
+                      placeholder="What did you work on?"
+                      rows={3}
+                      className={`${inputClass} resize-none min-h-[auto]`}
+                    />
+                    {deepseekKey && form.description.trim() && (
+                      <button
+                        onClick={rewriteDescription}
+                        disabled={rewritingDesc}
+                        className={`absolute bottom-2 right-2 flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border transition-all ${
+                          dark
+                            ? "bg-slate-800/80 border-slate-700 text-cyan-400 hover:bg-slate-700 hover:border-cyan-500/50"
+                            : "bg-white/80 border-slate-200 text-teal-600 hover:bg-slate-50 hover:border-teal-300"
+                        } ${rewritingDesc ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                      >
+                        {rewritingDesc ? (
+                          <><span className="w-2 h-2 rounded-full border border-current border-t-transparent animate-spin" /> Rewriting</>
+                        ) : "✦ Rewrite"}
+                      </button>
+                    )}
+                  </div>
+
+                  {projects.length > 0 && (
+                    <div>
+                      <Select
+                        value={form.projectId ? String(form.projectId) : "__none__"}
+                        onValueChange={(v) => setField("projectId", v === "__none__" ? null : v)}
+                      >
+                        <SelectTrigger className={selectTriggerClass}><SelectValue /></SelectTrigger>
+                        <SelectContent className={dark ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-200 text-slate-800"}>
+                          <SelectItem value="__none__">No project</SelectItem>
+                          {projects.map((p) => (
+                            <SelectItem key={p.id} value={String(p.id)}>
+                              <span className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full" style={{ background: p.color || "#14b8a6" }} />
+                                {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   )}
                 </div>
-
-                {/* Project */}
-                {projects.length > 0 && (
-                  <Select
-                    value={form.projectId ? String(form.projectId) : "__none__"}
-                    onValueChange={(v) => setField("projectId", v === "__none__" ? null : v)}
-                  >
-                    <SelectTrigger className={`${inputCls} w-full h-9`}><SelectValue /></SelectTrigger>
-                    <SelectContent className="bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text)]">
-                      <SelectItem value="__none__" className="focus:bg-[var(--color-accent-light)]">No project</SelectItem>
-                      {projects.map((p) => (
-                        <SelectItem key={p.id} value={String(p.id)} className="focus:bg-[var(--color-accent-light)]">
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                            <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color || "#14b8a6", display: "inline-block" }} />
-                            {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
               </div>
             </div>
 
-            {/* Breaks list — only shown when breaks exist */}
+            {/* Breaks */}
             {form.breaks.length > 0 && (
-              <div className={`rounded-xl border p-4 ${dark ? "bg-slate-800/20 border-slate-700/50" : "bg-slate-50/50 border-slate-200/50"}`}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "var(--color-secondary)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Breaks</p>
-                <div className="space-y-3">
+              <div className="mt-2">
+                <h3 className={`text-sm font-semibold mb-3 ${dark ? "text-slate-300" : "text-slate-700"}`}>Breaks</h3>
+                <div className="space-y-2">
                   {form.breaks.map((b) => (
-                    <div key={b.id} className={`p-3 rounded-lg border space-y-3 ${dark ? "bg-slate-800/40 border-slate-700/60" : "bg-white/70 border-slate-200"}`}>
-                      {/* From / To — each in its own column so TimeSelect always has room */}
-                      <div className="grid grid-cols-2 gap-3">
+                    <div
+                      key={b.id}
+                      className={`p-3 rounded-lg border space-y-3 transition-all ${
+                        dark ? "bg-slate-800/20 border-slate-700/50" : "bg-slate-50/50 border-slate-200/50"
+                      }`}
+                    >
+                      {/* Stack on mobile, side by side on sm+ */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <p style={{ fontSize: 11, color: "var(--color-muted)", fontWeight: 500, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.04em" }}>From</p>
+                          <label className={`block text-xs uppercase font-medium tracking-wide mb-1.5 ${dark ? "text-slate-400" : "text-slate-500"}`}>From</label>
                           <TimeSelect value={b.start} onChange={(v) => updateBreak(b.id, { start: v })} />
                         </div>
                         <div>
-                          <p style={{ fontSize: 11, color: "var(--color-muted)", fontWeight: 500, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.04em" }}>To</p>
+                          <label className={`block text-xs uppercase font-medium tracking-wide mb-1.5 ${dark ? "text-slate-400" : "text-slate-500"}`}>To</label>
                           <TimeSelect value={b.end} onChange={(v) => updateBreak(b.id, { end: v })} />
                         </div>
                       </div>
-                      {/* Unpaid + Remove */}
+
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
                           <Checkbox
                             id={`u-${b.id}`}
                             checked={b.unpaid}
                             onCheckedChange={(v) => updateBreak(b.id, { unpaid: !!v })}
-                            className="border-[var(--color-border)] data-[state=checked]:bg-[var(--color-accent)] data-[state=checked]:border-[var(--color-accent)] h-4 w-4"
+                            className={`w-4 h-4 rounded-sm border transition-all ${
+                              dark
+                                ? "border-slate-600 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                                : "border-slate-300 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                            }`}
                           />
-                          <Label htmlFor={`u-${b.id}`} style={{ fontSize: 12, color: "var(--color-secondary)", cursor: "pointer" }}>Unpaid (deducted)</Label>
-                        </div>
+                          <span className={`text-xs font-medium ${dark ? "text-slate-400" : "text-slate-600"}`}>Unpaid</span>
+                        </label>
+                        
                         <button
                           onClick={() => removeBreak(b.id)}
-                          className={`text-xs font-medium px-2 py-1 rounded transition-colors ${dark ? "text-red-400 hover:bg-red-500/10" : "text-red-500 hover:bg-red-50"}`}
-                          style={{ background: "none", border: "none", cursor: "pointer" }}
-                        >Remove</button>
+                          className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
+                            dark ? "text-red-400 hover:text-red-300 hover:bg-red-500/10" : "text-red-600 hover:text-red-700 hover:bg-red-50"
+                          }`}
+                        >
+                          Remove
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -455,66 +457,67 @@ export default function LogHoursForm() {
               </div>
             )}
 
-            {/* Action bar */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--color-border-light)" }}>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
+            {/* Bottom Action Bar */}
+            <div className={`mt-4 pt-6 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${dark ? "border-slate-800/60" : "border-slate-200"}`}>
+              <div className="flex items-center gap-4 flex-wrap">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox
                     id="form-billable"
                     checked={form.billable !== false}
                     onCheckedChange={(v) => setField("billable", !!v)}
-                    className="border-[var(--color-border)] data-[state=checked]:bg-[var(--color-accent)] data-[state=checked]:border-[var(--color-accent)] h-4 w-4"
+                    className={`w-5 h-5 rounded border-2 transition-all ${
+                      dark
+                        ? "border-slate-700 data-[state=checked]:bg-gradient-to-br data-[state=checked]:from-cyan-500 data-[state=checked]:to-teal-500 data-[state=checked]:border-cyan-500"
+                        : "border-slate-300 data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
+                    }`}
                   />
-                  <Label htmlFor="form-billable" style={{ fontSize: 13, color: "var(--color-secondary)", cursor: "pointer" }}>
-                    Billable
-                  </Label>
-                </div>
+                  <span className={`text-sm font-medium ${dark ? "text-slate-300" : "text-slate-600"}`}>Billable</span>
+                </label>
+                <div className={`w-px h-5 ${dark ? "bg-slate-700" : "bg-slate-200"} hidden sm:block`} />
                 <button
                   onClick={addBreak}
-                  className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs font-medium transition-all border ${
-                    dark
-                      ? "border-slate-700 text-slate-300 hover:border-cyan-500/50 hover:text-cyan-400"
-                      : "border-slate-200 text-slate-600 hover:border-teal-400 hover:text-teal-600"
+                  className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    dark ? "text-slate-400 hover:text-slate-300 hover:bg-slate-800/50" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
                   }`}
                 >
-                  <Plus size={13} />
+                  <Plus className="w-4 h-4" />
                   <span className="hidden sm:inline">Add break</span>
                   <span className="sm:hidden">Break</span>
                 </button>
               </div>
+
               <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                <div style={{ fontFamily: "'DM Mono', monospace" }}>
+                <div className="font-mono flex-1 sm:flex-none">
                   {form.start && form.end ? (
-                    <>
-                      <span
-                        className="text-xl sm:text-2xl font-semibold"
-                        style={dark ? {
-                          background: "linear-gradient(to right, #22d3ee, #2dd4bf, #34d399)",
-                          WebkitBackgroundClip: "text",
-                          WebkitTextFillColor: "transparent",
-                          backgroundClip: "text",
-                        } : { color: "var(--color-accent)" }}
-                      >{formatDuration(previewMins)}</span>
-                      <span style={{ fontSize: 12, color: "var(--color-muted)", marginLeft: 8 }}>{formatDecimal(previewMins)} hrs</span>
-                    </>
+                    <div className="flex items-baseline gap-2">
+                      <span className={`text-xl sm:text-2xl font-semibold bg-gradient-to-r bg-clip-text text-transparent ${
+                        dark ? "from-cyan-400 via-teal-400 to-emerald-400" : "from-teal-600 to-emerald-600"
+                      }`}>
+                        {formatDuration(previewMins)}
+                      </span>
+                      <span className={`text-xs ${dark ? "text-slate-500" : "text-slate-400"}`}>
+                        ({formatDecimal(previewMins)}h)
+                      </span>
+                    </div>
                   ) : (
-                    <p style={{ fontSize: 13, color: "var(--color-muted)" }}>Select times to see hours</p>
+                    <span className={`text-sm ${dark ? "text-slate-500" : "text-slate-400"}`}>Enter times</span>
                   )}
                 </div>
-                <button
+                
+                <Button
                   onClick={() => handleSubmit(form)}
                   disabled={!form.date || !form.start || !form.end}
-                  className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold text-white transition-all disabled:opacity-40 ${
+                  className={`px-6 sm:px-8 py-2.5 sm:py-3 h-auto rounded-xl text-sm sm:text-base font-semibold shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                     dark
-                      ? "bg-gradient-to-r from-cyan-500 to-teal-500 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50"
-                      : "bg-gradient-to-r from-teal-600 to-emerald-600 shadow-lg shadow-teal-500/20"
-                  }`}
+                      ? "bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:from-cyan-400 hover:to-teal-400"
+                      : "bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-teal-500/30 hover:from-teal-700 hover:to-emerald-700"
+                  } border-none`}
                 >
                   Log Hours
-                </button>
+                </Button>
               </div>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

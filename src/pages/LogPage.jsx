@@ -96,7 +96,11 @@ export default function LogPage() {
           <p style={{ fontSize: 12, color: "var(--color-muted)" }}>{entries.length} {entries.length === 1 ? "entry" : "entries"}</p>
           <button
             onClick={() => setSortAsc((s) => !s)}
-            style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "1px solid var(--color-border)", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 500, color: "var(--color-secondary)", cursor: "pointer" }}
+            className={`flex items-center gap-1.5 border rounded-md px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors ${
+              dark
+                ? "border-slate-600 text-slate-200 hover:border-slate-500 hover:text-white bg-transparent"
+                : "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900 bg-transparent"
+            }`}
           >
             {sortAsc ? "↑ Oldest first" : "↓ Newest first"}
           </button>
@@ -118,31 +122,38 @@ export default function LogPage() {
             return (
               <div key={monthKey} className="space-y-3">
                 {/* Month Header */}
-                <div className={`flex items-center justify-between p-5 rounded-xl transition-all ${
+                <div className={`p-4 sm:p-5 rounded-xl transition-all ${
                   dark
                     ? "bg-slate-900/40 backdrop-blur-xl border border-slate-800/50 hover:border-cyan-500/30"
                     : "bg-white/40 backdrop-blur-xl border border-slate-200/60 hover:border-blue-300/60"
                 }`}>
-                  <button
-                    onClick={() => toggleMonth(monthKey)}
-                    className="flex items-center gap-4 text-left flex-1 min-w-0"
-                  >
-                    {isMonthExpanded
-                      ? <ChevronDown className={`w-5 h-5 flex-shrink-0 ${dark ? "text-cyan-400" : "text-blue-600"}`} />
-                      : <ChevronRight className={`w-5 h-5 flex-shrink-0 ${dark ? "text-slate-500" : "text-slate-400"}`} />
-                    }
-                    <div>
-                      <h3 className={`text-xl font-semibold ${dark ? "text-white" : "text-slate-800"}`}>
-                        {formatMonthLabel(monthKey)}
-                      </h3>
-                      <p className={`text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>
-                        {weeks.length} {weeks.length === 1 ? "week" : "weeks"}
-                      </p>
+                  {/* Row 1: toggle + name + duration */}
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => toggleMonth(monthKey)}
+                      className="flex items-center gap-3 text-left flex-1 min-w-0"
+                    >
+                      {isMonthExpanded
+                        ? <ChevronDown className={`w-5 h-5 flex-shrink-0 ${dark ? "text-cyan-400" : "text-blue-600"}`} />
+                        : <ChevronRight className={`w-5 h-5 flex-shrink-0 ${dark ? "text-slate-500" : "text-slate-400"}`} />
+                      }
+                      <div>
+                        <h3 className={`text-lg sm:text-xl font-semibold ${dark ? "text-white" : "text-slate-800"}`}>
+                          {formatMonthLabel(monthKey)}
+                        </h3>
+                        <p className={`text-xs sm:text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>
+                          {weeks.length} {weeks.length === 1 ? "week" : "weeks"}
+                        </p>
+                      </div>
+                    </button>
+                    <div className={`text-xl font-mono font-semibold flex-shrink-0 ${dark ? "text-cyan-400" : "text-teal-600"}`}>
+                      {formatDuration(monthMins)}
                     </div>
-                  </button>
-                  <div className="flex items-center gap-3 flex-shrink-0">
+                  </div>
+                  {/* Row 2: earnings + actions — always visible */}
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-800/30 flex-wrap">
                     {hourlyRate > 0 && (
-                      <span className={`text-sm font-semibold font-mono hidden sm:inline ${dark ? "text-slate-300" : "text-slate-600"}`}>
+                      <span className={`text-sm font-semibold font-mono mr-auto ${dark ? "text-slate-300" : "text-slate-600"}`}>
                         {formatMoney((monthMins / 60) * hourlyRate)}
                       </span>
                     )}
@@ -151,8 +162,7 @@ export default function LogPage() {
                         size="sm" variant="outline"
                         onClick={() => generateMonthSummary(monthKey, weeks)}
                         disabled={monthSummaries[monthKey]?.loading}
-                        className="h-7 text-xs hidden sm:inline-flex"
-                        style={{ borderColor: "var(--color-border)", color: "var(--color-secondary)" }}
+                        className={`h-7 text-xs border ${dark ? "border-slate-600 text-slate-200 hover:text-white hover:border-slate-400 bg-transparent" : "border-slate-300 text-slate-600 hover:text-slate-800 bg-transparent"}`}
                       >
                         {monthSummaries[monthKey]?.loading ? "Summarising…" : "✦ Summarise"}
                       </Button>
@@ -160,14 +170,10 @@ export default function LogPage() {
                     <Button
                       size="sm" variant="outline"
                       onClick={() => exportMonthXLSX(monthKey, weeks)}
-                      className="h-7 text-xs hidden sm:inline-flex"
-                      style={{ borderColor: "var(--color-border)", color: "var(--color-secondary)" }}
+                      className={`h-7 text-xs border ${dark ? "border-slate-600 text-slate-200 hover:text-white hover:border-slate-400 bg-transparent" : "border-slate-300 text-slate-600 hover:text-slate-800 bg-transparent"}`}
                     >
                       Export
                     </Button>
-                    <div className={`text-xl font-mono font-semibold ${dark ? "text-cyan-400" : "text-teal-600"}`}>
-                      {formatDuration(monthMins)}
-                    </div>
                   </div>
                 </div>
 
@@ -240,7 +246,7 @@ export default function LogPage() {
                                         isExpanded ? `border-b ${dark ? "border-slate-800/50" : "border-slate-200/50"}` : ""
                                       } ${dark ? "bg-slate-800/20" : "bg-slate-50/50"}`}
                                     >
-                                      <div className="flex items-center justify-between">
+                                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                         <div className="flex items-center gap-4 flex-1 min-w-0">
                                           {/* Date block */}
                                           <div className="text-center flex-shrink-0 w-10">
@@ -275,7 +281,7 @@ export default function LogPage() {
                                           </div>
                                         </div>
                                         {/* Right: totals */}
-                                        <div className="text-right flex-shrink-0 ml-4">
+                                        <div className="sm:text-right flex-shrink-0 ml-0 sm:ml-4 flex items-center justify-between sm:block border-t sm:border-t-0 pt-3 sm:pt-0 mt-2 sm:mt-0 border-slate-200 dark:border-slate-800">
                                           {hourlyRate > 0 && (
                                             <div className={`text-xs font-mono mb-0.5 ${dark ? "text-slate-400" : "text-slate-500"}`}>
                                               {formatMoney((dayTotal / 60) * hourlyRate)}

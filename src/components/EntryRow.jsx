@@ -2,7 +2,7 @@ import { useApp } from "../context/AppContext";
 import { useTheme } from "../context/ThemeContext";
 import TimeSelect from "./TimeSelect";
 import { calcWorked, formatDuration, formatDecimal, toDisplayTime, unpaidBreakMins, formatMoney } from "../lib/utils";
-import { Edit2, Trash2, Copy } from "lucide-react";
+import { Edit2, Save, X, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,94 +29,171 @@ export default function EntryRow({ entry, index }) {
   const { theme } = useTheme();
   const dark = theme === "dark";
   const isEditing = inlineEditId === entry.id;
-  const inputCls = "bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] placeholder:text-[var(--color-muted)] focus-visible:ring-[var(--color-accent)]/40 focus-visible:ring-2 text-sm shadow-sm";
+
+  const inputClass = `w-full px-4 py-3 rounded-lg text-sm transition-all focus:outline-none focus:ring-2 ${
+    dark
+      ? "bg-slate-900/50 border border-slate-700/50 text-white placeholder:text-slate-500 focus:border-cyan-500 focus:ring-cyan-500/20"
+      : "bg-white/80 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:ring-blue-100"
+  }`;
+
+  const selectTriggerClass = `w-full h-auto px-4 py-3 rounded-lg text-sm transition-all focus:outline-none focus:ring-2 ${
+    dark
+      ? "bg-slate-900/50 border border-slate-700/50 text-white focus:border-cyan-500 focus:ring-cyan-500/20"
+      : "bg-white/80 border border-slate-200 text-slate-800 focus:border-blue-400 focus:ring-blue-100"
+  }`;
 
   if (isEditing && inlineForm) {
     const inlinePreviewMins = calcWorked(inlineForm.start, inlineForm.end, inlineForm.breaks);
     return (
-      <div style={{ padding: "16px 18px", borderTop: index > 0 ? "1px solid var(--color-border-light)" : "none", background: "var(--color-accent-light)" }}>
-        <div style={{ display: "flex", gap: 12, marginBottom: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+      <div className={`p-4 sm:p-5 rounded-xl border transition-all ${
+        dark ? "bg-slate-800/40 border-cyan-500/30 shadow-[0_4px_24px_rgba(6,182,212,0.1)]" : "bg-white/80 border-blue-400/30 shadow-lg shadow-blue-500/10"
+      }`}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <p style={{ fontSize: 11, color: "var(--color-muted)", fontWeight: 500, marginBottom: 4 }}>Date</p>
-            <input type="date" value={inlineForm.date} onChange={(e) => setInlineField("date", e.target.value)}
-              style={{ border: "1px solid var(--color-border)", borderRadius: 8, padding: "6px 10px", fontSize: 13, color: "var(--color-text)", background: "var(--color-input-bg)", outline: "none" }}
-              onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
-              onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+            <label className={`block text-xs font-medium mb-1.5 uppercase tracking-wide ${dark ? "text-slate-500" : "text-slate-500"}`}>Date</label>
+            <input
+              type="date"
+              value={inlineForm.date}
+              onChange={(e) => setInlineField("date", e.target.value)}
+              className={inputClass}
             />
           </div>
-          <div>
-            <p style={{ fontSize: 11, color: "var(--color-muted)", fontWeight: 500, marginBottom: 4 }}>Start</p>
-            <TimeSelect value={inlineForm.start} onChange={(v) => setInlineField("start", v)} />
-          </div>
-          <div>
-            <p style={{ fontSize: 11, color: "var(--color-muted)", fontWeight: 500, marginBottom: 4 }}>End</p>
-            <TimeSelect value={inlineForm.end} onChange={(v) => setInlineField("end", v)} />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={`block text-xs font-medium mb-1.5 uppercase tracking-wide ${dark ? "text-slate-500" : "text-slate-500"}`}>Start</label>
+              <TimeSelect value={inlineForm.start} onChange={(v) => setInlineField("start", v)} className={inputClass} />
+            </div>
+            <div>
+              <label className={`block text-xs font-medium mb-1.5 uppercase tracking-wide ${dark ? "text-slate-500" : "text-slate-500"}`}>End</label>
+              <TimeSelect value={inlineForm.end} onChange={(v) => setInlineField("end", v)} className={inputClass} />
+            </div>
           </div>
         </div>
 
-        <div style={{ marginBottom: 10 }}>
-          <Textarea value={inlineForm.description} onChange={(e) => setInlineField("description", e.target.value)}
-            placeholder="Description…" rows={2} className={`${inputCls} resize-none`} />
+        <div className="mb-4">
+          <label className={`block text-xs font-medium mb-1.5 uppercase tracking-wide hidden ${dark ? "text-slate-500" : "text-slate-500"}`}>Description</label>
+          <Textarea
+            value={inlineForm.description}
+            onChange={(e) => setInlineField("description", e.target.value)}
+            placeholder="Description…"
+            rows={2}
+            className={`${inputClass} resize-none`}
+          />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
-          {projects.length > 0 && (
-            <Select
-              value={inlineForm.projectId ? String(inlineForm.projectId) : "__none__"}
-              onValueChange={(v) => setInlineField("projectId", v === "__none__" ? null : v)}
-            >
-              <SelectTrigger className={`${inputCls} w-44 h-9`}><SelectValue /></SelectTrigger>
-              <SelectContent className="bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text)]">
-                <SelectItem value="__none__" className="focus:bg-[var(--color-accent-light)]">No project</SelectItem>
-                {projects.map((p) => (
-                  <SelectItem key={p.id} value={String(p.id)} className="focus:bg-[var(--color-accent-light)]">
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color || "#14b8a6", display: "inline-block" }} />
-                      {p.name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <Checkbox id={`ib-bill-${entry.id}`} checked={inlineForm.billable !== false}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
+          <div className="flex-1 w-full sm:max-w-xs">
+            {projects.length > 0 && (
+              <Select
+                value={inlineForm.projectId ? String(inlineForm.projectId) : "__none__"}
+                onValueChange={(v) => setInlineField("projectId", v === "__none__" ? null : v)}
+              >
+                <SelectTrigger className={selectTriggerClass}><SelectValue /></SelectTrigger>
+                <SelectContent className={dark ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-200 text-slate-800"}>
+                  <SelectItem value="__none__">No project</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full" style={{ background: p.color || "#14b8a6" }} />
+                        {p.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id={`ib-bill-${entry.id}`}
+              checked={inlineForm.billable !== false}
               onCheckedChange={(v) => setInlineField("billable", !!v)}
-              className="border-[var(--color-border)] data-[state=checked]:bg-[var(--color-accent)] data-[state=checked]:border-[var(--color-accent)] h-4 w-4" />
-            <Label htmlFor={`ib-bill-${entry.id}`} style={{ fontSize: 12, color: "var(--color-secondary)", cursor: "pointer" }}>Billable</Label>
+              className={`w-5 h-5 rounded border-2 transition-all ${
+                dark
+                  ? "border-slate-700 data-[state=checked]:bg-gradient-to-br data-[state=checked]:from-cyan-500 data-[state=checked]:to-teal-500 data-[state=checked]:border-cyan-500"
+                  : "border-slate-300 data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
+              }`}
+            />
+            <Label htmlFor={`ib-bill-${entry.id}`} className={`text-sm font-medium cursor-pointer ${dark ? "text-slate-300" : "text-slate-600"}`}>
+              Billable
+            </Label>
           </div>
         </div>
 
-        <div style={{ marginBottom: 12 }}>
+        <div className="mb-4">
           {inlineForm.breaks.map((b) => (
-            <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, padding: "8px 10px", background: "var(--color-surface-raised)", border: "1px solid var(--color-border)", borderRadius: 8, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 11, color: "var(--color-muted)" }}>From</span>
-              <TimeSelect value={b.start} onChange={(v) => updateInlineBreak(b.id, { start: v })} />
-              <span style={{ fontSize: 11, color: "var(--color-muted)" }}>→</span>
-              <TimeSelect value={b.end} onChange={(v) => updateInlineBreak(b.id, { end: v })} />
-              <Checkbox id={`ib-${b.id}`} checked={b.unpaid} onCheckedChange={(v) => updateInlineBreak(b.id, { unpaid: !!v })}
-                className="border-[var(--color-border)] data-[state=checked]:bg-[var(--color-accent)] data-[state=checked]:border-[var(--color-accent)] h-4 w-4" />
-              <Label htmlFor={`ib-${b.id}`} style={{ fontSize: 11, color: "var(--color-secondary)", cursor: "pointer" }}>Unpaid</Label>
-              <button onClick={() => removeInlineBreak(b.id)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "var(--color-muted)", fontSize: 14, lineHeight: 1 }} className="hover:text-red-400">✕</button>
+            <div key={b.id} className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 mb-2 rounded-lg border transition-all ${
+              dark ? "bg-slate-900/40 border-slate-700/50" : "bg-slate-50/50 border-slate-200/50"
+            }`}>
+              <div className="flex items-center gap-2 flex-1">
+                <TimeSelect value={b.start} onChange={(v) => updateInlineBreak(b.id, { start: v })} className={`px-2 py-1.5 rounded text-sm font-mono focus:outline-none focus:ring-1 ${
+                  dark ? "bg-slate-800 border border-slate-700 text-white focus:border-orange-500 focus:ring-orange-500/50" : "bg-white/80 border border-slate-200 text-slate-800 focus:border-orange-400 focus:ring-orange-400/50"
+                }`} />
+                <span className={`text-xs ${dark ? "text-slate-500" : "text-slate-400"}`}>→</span>
+                <TimeSelect value={b.end} onChange={(v) => updateInlineBreak(b.id, { end: v })} className={`px-2 py-1.5 rounded text-sm font-mono focus:outline-none focus:ring-1 ${
+                  dark ? "bg-slate-800 border border-slate-700 text-white focus:border-orange-500 focus:ring-orange-500/50" : "bg-white/80 border border-slate-200 text-slate-800 focus:border-orange-400 focus:ring-orange-400/50"
+                }`} />
+              </div>
+              
+              <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox
+                    id={`ib-${b.id}`}
+                    checked={b.unpaid}
+                    onCheckedChange={(v) => updateInlineBreak(b.id, { unpaid: !!v })}
+                    className={`w-4 h-4 rounded-sm border transition-all ${
+                      dark
+                        ? "border-slate-600 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                        : "border-slate-300 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                    }`}
+                  />
+                  <span className={`text-xs font-medium ${dark ? "text-slate-400" : "text-slate-600"}`}>Unpaid</span>
+                </label>
+                
+                <button
+                  onClick={() => removeInlineBreak(b.id)}
+                  className={`text-xs font-medium px-2 py-1 rounded transition-colors ${dark ? "text-red-400 hover:bg-red-500/10" : "text-red-500 hover:bg-red-50"}`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           ))}
-          <Button variant="outline" size="sm" onClick={addInlineBreak} className="h-7 text-xs" style={{ borderColor: "var(--color-border)", color: "var(--color-secondary)" }}>+ Add break</Button>
+          <Button variant="outline" size="sm" onClick={addInlineBreak} className={`h-8 text-xs font-medium border-dashed ${
+            dark ? "border-slate-700 text-slate-300 hover:text-white" : "border-slate-300 text-slate-600 hover:text-slate-900"
+          }`}>+ Add break</Button>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontFamily: "'DM Mono', monospace" }}>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200 dark:border-slate-700/50">
+          <div className="font-mono flex items-baseline gap-2 w-full sm:w-auto text-center sm:text-left">
             {inlineForm.start && inlineForm.end && (
               <>
-                <span style={{ fontSize: 16, fontWeight: 600, color: "var(--color-accent)" }}>{formatDuration(inlinePreviewMins)}</span>
-                <span style={{ fontSize: 11, color: "var(--color-muted)", marginLeft: 6 }}>{formatDecimal(inlinePreviewMins)} hrs</span>
+                <span className={`text-xl font-semibold bg-gradient-to-r bg-clip-text text-transparent ${
+                  dark ? "from-cyan-400 to-teal-400" : "from-teal-600 to-emerald-600"
+                }`}>{formatDuration(inlinePreviewMins)}</span>
+                <span className={`text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{formatDecimal(inlinePreviewMins)}h</span>
               </>
             )}
           </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            <Button variant="ghost" size="sm" onClick={cancelInlineEdit} className="h-8 px-3 text-sm" style={{ color: "var(--color-secondary)" }}>Cancel</Button>
-            <Button size="sm" onClick={saveInlineEdit} disabled={!inlineForm.date || !inlineForm.start || !inlineForm.end}
-              className="h-8 px-4 text-sm font-semibold disabled:opacity-40"
-              style={{ background: "var(--color-accent)", color: "#fff" }}>Save</Button>
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <Button
+              variant="ghost"
+              onClick={cancelInlineEdit}
+              className={`h-9 px-4 text-sm font-medium ${dark ? "text-slate-300 hover:text-white hover:bg-slate-800" : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"}`}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveInlineEdit}
+              disabled={!inlineForm.date || !inlineForm.start || !inlineForm.end}
+              className={`h-9 px-6 text-sm font-semibold text-white shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                dark
+                  ? "bg-gradient-to-r from-cyan-500 to-teal-500 shadow-cyan-500/30 hover:shadow-cyan-500/50"
+                  : "bg-gradient-to-r from-teal-600 to-emerald-600 shadow-teal-500/30 hover:shadow-teal-500/50"
+              } border-none`}
+            >
+              Save <Save className="ml-1 w-3.5 h-3.5" />
+            </Button>
           </div>
         </div>
       </div>
@@ -132,100 +209,97 @@ export default function EntryRow({ entry, index }) {
   const widthPct = Math.max(0, Math.min(100 - leftPct, ((endH - startH) / 12) * 100));
 
   return (
-    <div className={`p-4 rounded-lg border transition-all ${
+    <div className={`p-4 rounded-xl border transition-all relative overflow-hidden group ${
       dark
-        ? "bg-slate-800/30 border-slate-700/50 hover:border-slate-600/50"
-        : "bg-white/50 border-slate-200/50 hover:border-slate-300/60 hover:shadow-sm"
+        ? "bg-slate-800/30 border-slate-700/50 hover:border-slate-600/50 hover:bg-slate-800/50"
+        : "bg-white/50 border-slate-200/50 hover:border-slate-300/60 hover:bg-white/80 hover:shadow-sm"
     }`}>
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-3 gap-3 relative z-10">
         <div className="flex-1 min-w-0">
-          {/* Badges */}
-          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             {project ? (
               <span
-                style={{ background: project.color + "22", color: project.color, borderColor: project.color + "44" }}
-                className="text-xs px-2 py-0.5 rounded-full font-medium border"
+                style={{ backgroundColor: project.color + "22", color: project.color, borderColor: project.color + "44" }}
+                className="text-xs px-2.5 py-0.5 rounded-full font-medium border"
               >
                 {project.name}
               </span>
             ) : (
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+              <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
                 dark ? "bg-slate-700/50 text-slate-400" : "bg-slate-100 text-slate-500"
               }`}>
                 No project
               </span>
             )}
-            {entry.billable !== false ? (
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+            {entry.billable !== false && (
+              <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
                 dark ? "bg-emerald-500/20 text-emerald-400" : "bg-emerald-100 text-emerald-700"
               }`}>
                 Billable
               </span>
-            ) : (
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                dark ? "bg-purple-500/20 text-purple-400" : "bg-purple-100 text-purple-700"
-              }`}>
-                Non-billable
-              </span>
             )}
           </div>
-          {/* Description */}
-          <p className={`font-medium mb-2 truncate ${dark ? "text-white" : "text-slate-800"} ${!entry.description ? "opacity-40 italic" : ""}`}>
+          
+          <p className={`font-medium mb-2 pr-4 ${dark ? "text-white" : "text-slate-800"} ${!entry.description ? "opacity-40 italic" : ""}`}>
             {entry.description || "No description"}
           </p>
-          {/* Time range + break deduction */}
+          
           <div className="flex items-center gap-4 flex-wrap">
-            <span className={`text-sm font-mono ${dark ? "text-slate-400" : "text-slate-500"}`}>
-              {toDisplayTime(entry.start)} → {toDisplayTime(entry.end)}
+            <span className={`text-sm font-mono flex items-center gap-1.5 ${dark ? "text-slate-400" : "text-slate-500"}`}>
+              {toDisplayTime(entry.start)} <span className="text-[10px] opacity-60">→</span> {toDisplayTime(entry.end)}
             </span>
             {bm > 0 && (
-              <span className={`text-xs ${dark ? "text-slate-500" : "text-slate-400"}`}>
-                −{formatDuration(bm)} break
+              <span className={`text-xs flex items-center gap-1 ${dark ? "text-orange-400/80" : "text-orange-600/80"}`}>
+                <span className={`w-1 h-1 rounded-full ${dark ? "bg-orange-400/80" : "bg-orange-600/80"}`} />
+                {bm}m break
               </span>
             )}
           </div>
         </div>
 
-        <div className="text-right ml-4 flex-shrink-0">
-          {hourlyRate > 0 && (
-            <div className={`text-xs font-mono mb-1 ${dark ? "text-slate-400" : "text-slate-500"}`}>
-              {formatMoney((entry.billable !== false ? entry.minutes : 0) / 60 * hourlyRate)}
+        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-transparent border-slate-200 dark:border-slate-700/50">
+          <div className="flex items-center gap-4 sm:block text-right">
+            {hourlyRate > 0 && (
+              <div className={`text-xs font-mono mb-1 ${dark ? "text-emerald-400/80" : "text-emerald-600"}`}>
+                {formatMoney((entry.billable !== false ? entry.minutes : 0) / 60 * hourlyRate)}
+              </div>
+            )}
+            <div className={`text-xl font-mono font-bold tracking-tight bg-gradient-to-r bg-clip-text text-transparent ${
+              dark ? "from-cyan-400 to-teal-400" : "from-teal-600 to-emerald-600"
+            }`}>
+              {formatDuration(entry.minutes)}
             </div>
-          )}
-          <div className={`text-xl font-mono font-semibold ${dark ? "text-cyan-400" : "text-teal-600"}`}>
-            {formatDuration(entry.minutes)}
           </div>
-          {/* Action buttons — always visible, icon style */}
-          <div className="flex items-center gap-1 mt-2 justify-end">
+          
+          <div className="flex items-center gap-1 sm:mt-3 justify-end opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => startInlineEdit(entry)}
               title="Edit"
-              className={`p-1.5 rounded-lg transition-all ${dark ? "text-cyan-400 hover:bg-cyan-500/10" : "text-blue-600 hover:bg-blue-50"}`}
+              className={`p-1.5 sm:p-2 rounded-lg transition-all ${dark ? "text-cyan-400 hover:bg-cyan-500/10" : "text-blue-600 hover:bg-blue-50"}`}
             >
-              <Edit2 className="w-3.5 h-3.5" />
+              <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
             <button
               onClick={() => duplicateEntry(entry)}
               title="Duplicate to today"
-              className={`p-1.5 rounded-lg transition-all ${dark ? "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}
+              className={`p-1.5 sm:p-2 rounded-lg transition-all ${dark ? "text-slate-400 hover:text-white hover:bg-slate-700/50" : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"}`}
             >
-              <Copy className="w-3.5 h-3.5" />
+              <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
             <button
               onClick={() => handleDelete(entry.id)}
               title="Delete"
-              className={`p-1.5 rounded-lg transition-all ${dark ? "text-red-400 hover:bg-red-500/10" : "text-red-500 hover:bg-red-50"}`}
+              className={`p-1.5 sm:p-2 rounded-lg transition-all ${dark ? "text-red-400 hover:bg-red-500/10" : "text-red-500 hover:bg-red-50"}`}
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Timeline bar */}
-      <div className={`relative h-2 rounded-full overflow-hidden ${dark ? "bg-slate-800/50" : "bg-slate-200/50"}`}>
+      <div className={`absolute bottom-0 left-0 right-0 h-1 sm:h-1.5 ${dark ? "bg-slate-800/50" : "bg-slate-200/50"}`}>
         <div
-          className={`absolute top-0 h-full rounded-full ${
+          className={`absolute top-0 h-full ${
             entry.billable !== false
               ? dark ? "bg-gradient-to-r from-cyan-500 to-teal-500" : "bg-gradient-to-r from-teal-500 to-emerald-500"
               : dark ? "bg-gradient-to-r from-purple-500 to-pink-500" : "bg-gradient-to-r from-purple-400 to-pink-400"
@@ -240,7 +314,7 @@ export default function EntryRow({ entry, index }) {
           return (
             <div
               key={i}
-              className={`absolute top-0 h-full ${dark ? "bg-slate-950/80" : "bg-white/80"}`}
+              className={`absolute top-0 h-full ${dark ? "bg-slate-900" : "bg-white"}`}
               style={{ left: `${bLeft}%`, width: `${bWidth}%` }}
             />
           );
