@@ -141,6 +141,21 @@ export function AppProvider({ session, children }) {
     return () => clearInterval(interval);
   }, [reminderTime, session, entries]);
 
+  // ── Capture Google provider_token when user was already signed in ──
+  // loadData only runs on user ID change. After the Sheets OAuth redirect
+  // the user ID is unchanged, so we need this separate effect.
+  useEffect(() => {
+    if (!session?.provider_token || !session?.user?.id) return;
+    const expiry = Date.now() + 3500 * 1000;
+    setGoogleToken(session.provider_token);
+    setGoogleTokenExpiry(expiry);
+    supabase.from("user_settings").upsert({
+      user_id: session.user.id,
+      google_access_token: session.provider_token,
+      google_token_expiry: expiry,
+    });
+  }, [session?.provider_token]);
+
   // ── Clock tick ───────────────────────────────────────────────
   useEffect(() => {
     if (!clockIn) return;
@@ -873,6 +888,7 @@ export function AppProvider({ session, children }) {
 
     if (!res.ok) {
       if (res.status === 401) { connectGoogleSheets(); return; }
+      if (res.status === 403) { flash("✗ Sheets: enable Google Sheets API in your Google Cloud project"); return; }
       flash("✗ Google Sheets export failed");
       return;
     }

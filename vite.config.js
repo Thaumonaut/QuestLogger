@@ -33,7 +33,6 @@ export default defineConfig({
         clientsClaim: true,
         cleanupOutdatedCaches: true,
         globPatterns: ["**/*.{js,css,png,svg,ico}"],
-        navigateFallback: "index.html",
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/clmmljondpxiwyvcqrjg\.supabase\.co\/.*/i,
