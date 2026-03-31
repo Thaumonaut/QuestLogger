@@ -5,8 +5,6 @@ import { supabase } from "../supabase";
 import { formatDuration } from "../lib/utils";
 import { Sun, Moon, LogOut } from "lucide-react";
 
-import logoDark from "../assets/imports/QuestLogger_Darkmode_Logo.png";
-import logoLight from "../assets/imports/QuestLogger_Logo_Long.png";
 
 export default function Nav() {
   const { settings, todayMins, exportMsg, openSettings } = useApp();
@@ -38,10 +36,10 @@ export default function Nav() {
     }`}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 h-auto sm:h-16 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
         <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
-          <img 
-            src={darkMode ? logoDark : logoLight} 
-            alt="QuestLogger" 
-            className="h-6 sm:h-8" 
+          <img
+            src="/logo.svg"
+            alt="QuestLogger"
+            className={`h-6 sm:h-8 ${darkMode ? "brightness-0 invert" : ""}`}
           />
           <div className="flex-1 sm:flex-none">
             <h1 className={`text-xs sm:text-sm font-semibold ${darkMode ? 'text-white' : 'text-slate-800'}`}>

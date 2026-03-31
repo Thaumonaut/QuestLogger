@@ -27,7 +27,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
+        cleanupOutdatedCaches: true,
+        globPatterns: ["**/*.{js,css,png,svg,ico}"],
+        navigateFallback: "index.html",
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/clmmljondpxiwyvcqrjg\.supabase\.co\/.*/i,

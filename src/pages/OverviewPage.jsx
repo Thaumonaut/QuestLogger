@@ -229,9 +229,8 @@ export default function OverviewPage() {
             </button>
           </div>
         </div>
-      </div>
 
-      {/* ── Stat Cards ── */}
+        {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-8 hidden">
         {/* Earnings */}
         <div
@@ -622,6 +621,7 @@ export default function OverviewPage() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
