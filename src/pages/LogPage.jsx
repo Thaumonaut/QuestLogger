@@ -18,7 +18,7 @@ export default function LogPage() {
     entries, grouped, loading, sortAsc, setSortAsc,
     expandedDates, toggleExpanded, inlineEditId, cancelInlineEdit,
     showSettings, hourlyRate, deepseekKey, monthSummaries, setMonthSummaries,
-    generateMonthSummary, exportMonthXLSX, flash,
+    generateMonthSummary, exportMonthXLSX, exportToGoogleSheets, googleToken, googleTokenExpiry, flash,
     localImportBanner, setLocalImportBanner, importFromLocalStorage,
     importEntriesRef, importProfileRef, importEntriesFromFile, importProfileFromFile,
   } = useApp();
@@ -172,7 +172,14 @@ export default function LogPage() {
                       onClick={() => exportMonthXLSX(monthKey, weeks)}
                       className={`h-7 text-xs border ${dark ? "border-slate-600 text-slate-200 hover:text-white hover:border-slate-400 bg-transparent" : "border-slate-300 text-slate-600 hover:text-slate-800 bg-transparent"}`}
                     >
-                      Export
+                      Export XLSX
+                    </Button>
+                    <Button
+                      size="sm" variant="outline"
+                      onClick={() => exportToGoogleSheets(monthKey, weeks.flatMap((w) => w.days.flatMap((d) => d.entries)))}
+                      className={`h-7 text-xs border ${dark ? "border-slate-600 text-slate-200 hover:text-white hover:border-slate-400 bg-transparent" : "border-slate-300 text-slate-600 hover:text-slate-800 bg-transparent"}`}
+                    >
+                      {googleToken && Date.now() < googleTokenExpiry ? "Sheets" : "Connect Sheets"}
                     </Button>
                   </div>
                 </div>

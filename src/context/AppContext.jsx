@@ -703,7 +703,7 @@ export function AppProvider({ session, children }) {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("Timesheet");
     // Cols: Date, Start, End, Project, Billable, Unpaid Break, [Income Earned, Hours Worked, Description, Total Income, Total Hours] or [Hours Worked, Description, Total Hours]
-    const cols = hasRate ? [20, 12, 12, 18, 10, 22, 16, 16, 38, 16, 16] : [20, 12, 12, 18, 10, 22, 16, 38, 16];
+    const cols = hasRate ? [20, 12, 12, 18, 10, 22, 16, 16, 16, 16, 38] : [20, 12, 12, 18, 10, 22, 16, 16, 38];
     ws.columns = cols.map((width) => ({ width }));
     const numCols = cols.length;
     const merge = (row) => ws.mergeCells(row.number, 1, row.number, numCols);
@@ -717,8 +717,8 @@ export function AppProvider({ session, children }) {
     if (hasRate) addInfo("Hourly Rate:", `$${hourlyRate.toFixed(2)}`);
     ws.addRow([]).height = 6;
     const headerLabels = hasRate
-      ? ["Date", "Start", "End", "Project", "Billable", "Unpaid Break (mins)", "Income Earned", "Hours Worked", "Description", "Total Income", "Total Hours"]
-      : ["Date", "Start", "End", "Project", "Billable", "Unpaid Break (mins)", "Hours Worked", "Description", "Total Hours"];
+      ? ["Date", "Start", "End", "Project", "Billable", "Unpaid Break (mins)", "Income Earned", "Hours Worked", "Total Income", "Total Hours", "Description"]
+      : ["Date", "Start", "End", "Project", "Billable", "Unpaid Break (mins)", "Hours Worked", "Total Hours", "Description"];
     const hdrRow = ws.addRow(headerLabels);
     hdrRow.height = 20;
     styleAll(hdrRow, { fill: navyFill, font: whiteFont, border: cellBorder, alignment: { vertical: "middle" } });
@@ -729,14 +729,14 @@ export function AppProvider({ session, children }) {
       const wkLabel = weekRangeLabel(wkStr);
       let weekMins = 0, weekEarned = 0;
       for (const { dayEntries } of wkDays) { for (const e of dayEntries) { weekMins += e.minutes; weekEarned += hasRate && e.billable !== false ? (e.minutes / 60) * hourlyRate : 0; } }
-      const wkCells = hasRate ? [wkLabel, "", "", "", "", "", "", "", "", formatMoney(weekEarned), formatDuration(weekMins)] : [wkLabel, "", "", "", "", "", "", "", formatDuration(weekMins)];
+      const wkCells = hasRate ? [wkLabel, "", "", "", "", "", "", "", formatMoney(weekEarned), formatDuration(weekMins), ""] : [wkLabel, "", "", "", "", "", "", formatDuration(weekMins), ""];
       const wkRow = ws.addRow(wkCells); wkRow.height = 22;
       styleAll(wkRow, { fill: navyFill, font: whiteFont, border: cellBorder, alignment: { vertical: "middle" } });
       for (const { date, dayEntries } of wkDays) {
         const dayMins = dayEntries.reduce((a, e) => a + e.minutes, 0);
         const dayEarned = hasRate ? dayEntries.reduce((a, e) => a + (e.billable !== false ? (e.minutes / 60) * hourlyRate : 0), 0) : 0;
         const dayLabel = new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
-        const dayCells = hasRate ? [dayLabel, "", "", "", "", "", "", "", "", formatMoney(dayEarned), formatDuration(dayMins)] : [dayLabel, "", "", "", "", "", "", "", formatDuration(dayMins)];
+        const dayCells = hasRate ? [dayLabel, "", "", "", "", "", "", "", formatMoney(dayEarned), formatDuration(dayMins), ""] : [dayLabel, "", "", "", "", "", "", formatDuration(dayMins), ""];
         const dayRow = ws.addRow(dayCells); dayRow.height = 18;
         styleAll(dayRow, { fill: lightFill, font: boldFont, border: cellBorder, alignment: { vertical: "middle" } });
         for (const e of dayEntries) {
@@ -745,8 +745,8 @@ export function AppProvider({ session, children }) {
           const billableLabel = e.billable === false ? "No" : "Yes";
           const earned = hasRate && e.billable !== false ? (e.minutes / 60) * hourlyRate : null;
           const entryCells = hasRate
-            ? ["", toDisplayTime(e.start), toDisplayTime(e.end), projectName, billableLabel, bm > 0 ? bm : "", earned != null ? formatMoney(earned) : "", formatDuration(e.minutes), e.description || "", "", ""]
-            : ["", toDisplayTime(e.start), toDisplayTime(e.end), projectName, billableLabel, bm > 0 ? bm : "", formatDuration(e.minutes), e.description || "", ""];
+            ? ["", toDisplayTime(e.start), toDisplayTime(e.end), projectName, billableLabel, bm > 0 ? bm : "", earned != null ? formatMoney(earned) : "", formatDuration(e.minutes), "", "", e.description || ""]
+            : ["", toDisplayTime(e.start), toDisplayTime(e.end), projectName, billableLabel, bm > 0 ? bm : "", formatDuration(e.minutes), "", e.description || ""];
           const entryRow = ws.addRow(entryCells); entryRow.height = 16;
           styleAll(entryRow, { font: baseFont, border: cellBorder, alignment: { vertical: "middle" } });
         }
@@ -754,7 +754,7 @@ export function AppProvider({ session, children }) {
       }
       ws.addRow([]).height = 8;
     }
-    const totalCells = hasRate ? ["TOTAL", "", "", "", "", "", "", "", "", formatMoney(grandEarned), formatDuration(grandMins)] : ["TOTAL", "", "", "", "", "", "", formatDuration(grandMins), ""];
+    const totalCells = hasRate ? ["TOTAL", "", "", "", "", "", "", "", formatMoney(grandEarned), formatDuration(grandMins), ""] : ["TOTAL", "", "", "", "", "", "", formatDuration(grandMins), ""];
     const totalRow = ws.addRow(totalCells); totalRow.height = 20;
     styleAll(totalRow, { font: boldFont, border: cellBorder, alignment: { vertical: "middle" } });
     return wb.xlsx.writeBuffer();
@@ -981,8 +981,8 @@ export function AppProvider({ session, children }) {
     // ── Header row (record its index for freezing) ──
     const headerRowIndex = rowData.length;
     const headerLabels = hasRate
-      ? ["Date", "Start", "End", "Project", "Billable", "Break (min)", "Income", "Hours", "Description", "Total Income", "Total Hours"]
-      : ["Date", "Start", "End", "Project", "Billable", "Break (min)", "Hours", "Description", "Total Hours"];
+      ? ["Date", "Start", "End", "Project", "Billable", "Break (min)", "Income", "Hours", "Total Income", "Total Hours", "Description"]
+      : ["Date", "Start", "End", "Project", "Billable", "Break (min)", "Hours", "Total Hours", "Description"];
     rowData.push({ values: headerLabels.map((h) => cell(h, navyFmt)) });
 
     // ── Group entries by week → day ──
@@ -1007,11 +1007,11 @@ export function AppProvider({ session, children }) {
         }
       }
 
-      // Week row
+      // Week row — Total Income at numCols-3 (if hasRate), Total Hours at numCols-2, Description blank at numCols-1
       rowData.push({ values: Array(numCols).fill(null).map((_, i) => {
         if (i === 0) return cell(weekRangeLabel(wkStr), navyFmt);
-        if (hasRate && i === numCols - 2) return cell(formatMoney(weekEarned), navyFmt);
-        if (i === numCols - 1) return cell(formatDuration(weekMins), navyFmt);
+        if (hasRate && i === numCols - 3) return cell(formatMoney(weekEarned), navyFmt);
+        if (i === numCols - 2) return cell(formatDuration(weekMins), navyFmt);
         return empty(navyFmt);
       })});
 
@@ -1023,8 +1023,8 @@ export function AppProvider({ session, children }) {
         // Day row
         rowData.push({ values: Array(numCols).fill(null).map((_, i) => {
           if (i === 0) return cell(dayLabel, lightFmt);
-          if (hasRate && i === numCols - 2) return cell(formatMoney(dayEarned), lightFmt);
-          if (i === numCols - 1) return cell(formatDuration(dayMins), lightFmt);
+          if (hasRate && i === numCols - 3) return cell(formatMoney(dayEarned), lightFmt);
+          if (i === numCols - 2) return cell(formatDuration(dayMins), lightFmt);
           return empty(lightFmt);
         })});
 
@@ -1034,8 +1034,8 @@ export function AppProvider({ session, children }) {
           const projectName = (e.project_ids || []).map((id) => projectMap.get(id)?.name).filter(Boolean).join(", ");
           const earned = hasRate && e.billable !== false ? formatMoney((e.minutes / 60) * hourlyRate) : "";
           const entryCells = hasRate
-            ? [empty(baseFmt), cell(toDisplayTime(e.start), baseFmt), cell(toDisplayTime(e.end), baseFmt), cell(projectName, baseFmt), cell(e.billable === false ? "No" : "Yes", baseFmt), cell(bm > 0 ? bm : "", baseFmt), cell(earned, baseFmt), cell(formatDuration(e.minutes), baseFmt), cell(e.description || "", baseFmt), empty(baseFmt), empty(baseFmt)]
-            : [empty(baseFmt), cell(toDisplayTime(e.start), baseFmt), cell(toDisplayTime(e.end), baseFmt), cell(projectName, baseFmt), cell(e.billable === false ? "No" : "Yes", baseFmt), cell(bm > 0 ? bm : "", baseFmt), cell(formatDuration(e.minutes), baseFmt), cell(e.description || "", baseFmt), empty(baseFmt)];
+            ? [empty(baseFmt), cell(toDisplayTime(e.start), baseFmt), cell(toDisplayTime(e.end), baseFmt), cell(projectName, baseFmt), cell(e.billable === false ? "No" : "Yes", baseFmt), cell(bm > 0 ? bm : "", baseFmt), cell(earned, baseFmt), cell(formatDuration(e.minutes), baseFmt), empty(baseFmt), empty(baseFmt), cell(e.description || "", baseFmt)]
+            : [empty(baseFmt), cell(toDisplayTime(e.start), baseFmt), cell(toDisplayTime(e.end), baseFmt), cell(projectName, baseFmt), cell(e.billable === false ? "No" : "Yes", baseFmt), cell(bm > 0 ? bm : "", baseFmt), cell(formatDuration(e.minutes), baseFmt), empty(baseFmt), cell(e.description || "", baseFmt)];
           rowData.push({ values: entryCells });
         }
 
@@ -1049,8 +1049,8 @@ export function AppProvider({ session, children }) {
     // ── Total row ──
     rowData.push({ values: Array(numCols).fill(null).map((_, i) => {
       if (i === 0) return cell("TOTAL", boldFmt);
-      if (hasRate && i === numCols - 2) return cell(formatMoney(grandEarned), boldFmt);
-      if (i === numCols - 1) return cell(formatDuration(grandMins), boldFmt);
+      if (hasRate && i === numCols - 3) return cell(formatMoney(grandEarned), boldFmt);
+      if (i === numCols - 2) return cell(formatDuration(grandMins), boldFmt);
       return empty(boldFmt);
     })});
 
@@ -1075,7 +1075,7 @@ export function AppProvider({ session, children }) {
     const sheetId = created.sheets[0].properties.sheetId;
 
     // ── batchUpdate: merge title, freeze header, set column widths ──
-    const colWidths = hasRate ? [160, 80, 80, 140, 70, 100, 100, 80, 260, 120, 120] : [160, 80, 80, 140, 70, 100, 80, 260, 120];
+    const colWidths = hasRate ? [160, 80, 80, 140, 70, 100, 100, 80, 120, 120, 260] : [160, 80, 80, 140, 70, 100, 80, 120, 260];
     fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
       method: "POST",
       headers: { "Authorization": `Bearer ${googleToken}`, "Content-Type": "application/json" },
