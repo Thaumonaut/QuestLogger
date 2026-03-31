@@ -1,11 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "../context/AppContext";
+import { useTheme } from "../context/ThemeContext";
 import LogHoursForm from "../components/LogHoursForm";
 import EntryRow from "../components/EntryRow";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { formatDateLabel, formatMonthLabel, formatDecimal, formatDuration, formatMoney, weekRangeLabel } from "../lib/utils";
+import { formatMonthLabel, formatDuration, formatMoney, weekRangeLabel } from "../lib/utils";
+
+function timeToHour(t) {
+  if (!t) return 8;
+  const [h, m] = t.split(":").map(Number);
+  return h + m / 60;
+}
 
 export default function LogPage() {
   const {
@@ -16,6 +22,23 @@ export default function LogPage() {
     localImportBanner, setLocalImportBanner, importFromLocalStorage,
     importEntriesRef, importProfileRef, importEntriesFromFile, importProfileFromFile,
   } = useApp();
+  const { theme } = useTheme();
+  const dark = theme === "dark";
+
+  const [expandedMonths, setExpandedMonths] = useState(new Set());
+  const [expandedWeeks, setExpandedWeeks] = useState(new Set());
+  const initializedRef = useRef(false);
+
+  // Auto-expand the most recent month and week on first load
+  useEffect(() => {
+    if (!initializedRef.current && grouped.length > 0) {
+      initializedRef.current = true;
+      setExpandedMonths(new Set([grouped[0].monthKey]));
+      if (grouped[0].weeks.length > 0) {
+        setExpandedWeeks(new Set([grouped[0].weeks[0].weekKey]));
+      }
+    }
+  }, [grouped]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -29,6 +52,14 @@ export default function LogPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [inlineEditId, showSettings, cancelInlineEdit]);
 
+  function toggleMonth(key) {
+    setExpandedMonths((s) => { const n = new Set(s); n.has(key) ? n.delete(key) : n.add(key); return n; });
+  }
+
+  function toggleWeek(key) {
+    setExpandedWeeks((s) => { const n = new Set(s); n.has(key) ? n.delete(key) : n.add(key); return n; });
+  }
+
   if (loading) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 300 }}>
@@ -38,7 +69,7 @@ export default function LogPage() {
   }
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 24px 64px" }}>
+    <div className="max-w-[720px] mx-auto px-4 sm:px-6 py-8 pb-16">
 
       {/* LocalStorage migration banner */}
       {localImportBanner && (
@@ -59,111 +90,229 @@ export default function LogPage() {
       {/* Log Hours form */}
       <LogHoursForm />
 
-      {/* Entry list controls */}
+      {/* Sort control */}
       {grouped.length > 0 && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, padding: "0 2px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, padding: "0 2px" }}>
           <p style={{ fontSize: 12, color: "var(--color-muted)" }}>{entries.length} {entries.length === 1 ? "entry" : "entries"}</p>
-          <button onClick={() => setSortAsc((s) => !s)} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "1px solid var(--color-border)", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 500, color: "var(--color-secondary)", cursor: "pointer" }}>
+          <button
+            onClick={() => setSortAsc((s) => !s)}
+            style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "1px solid var(--color-border)", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 500, color: "var(--color-secondary)", cursor: "pointer" }}
+          >
             {sortAsc ? "↑ Oldest first" : "↓ Newest first"}
           </button>
         </div>
       )}
 
-      {/* Entry list */}
+      {/* Empty state */}
       {grouped.length === 0 ? (
         <div style={{ textAlign: "center", paddingTop: 64, paddingBottom: 64 }}>
           <div style={{ fontSize: 36, marginBottom: 12 }}>🗓</div>
           <p style={{ fontSize: 14, color: "var(--color-muted)" }}>No entries yet. Start logging your hours above.</p>
         </div>
       ) : (
-        grouped.map(({ monthKey, weeks }) => {
-          const monthMins = weeks.flatMap((w) => w.days).flatMap((d) => d.entries).reduce((a, e) => a + e.minutes, 0);
-          return (
-            <div key={monthKey} style={{ marginBottom: 28 }}>
-              {/* Month header */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: monthSummaries[monthKey]?.text ? 8 : 14, padding: "0 2px" }}>
-                <h2 style={{ fontSize: 17, fontWeight: 700, color: "var(--color-text)", fontFamily: "'Parkinsans', sans-serif", margin: 0 }}>
-                  {formatMonthLabel(monthKey)}
-                </h2>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  {hourlyRate > 0 && (
-                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-secondary)", fontFamily: "'DM Mono', monospace" }}>
-                      {formatMoney((monthMins / 60) * hourlyRate)}
-                    </span>
-                  )}
-                  <div style={{ background: "var(--color-accent-light)", border: "1px solid var(--color-accent-border)", borderRadius: 20, padding: "3px 12px", fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--color-accent)", fontWeight: 600 }}>
-                    {formatDuration(monthMins)}
-                  </div>
-                  {deepseekKey && (
-                    <Button size="sm" variant="outline" onClick={() => generateMonthSummary(monthKey, weeks)} disabled={monthSummaries[monthKey]?.loading} className="h-7 text-xs" style={{ borderColor: "var(--color-border)", color: "var(--color-secondary)" }}>
-                      {monthSummaries[monthKey]?.loading ? "Summarising…" : "✦ Summarise"}
-                    </Button>
-                  )}
-                  <Button size="sm" variant="outline" onClick={() => exportMonthXLSX(monthKey, weeks)} className="h-7 text-xs" style={{ borderColor: "var(--color-border)", color: "var(--color-secondary)" }}>
-                    Export XLSX
-                  </Button>
-                </div>
-              </div>
+        <div className="space-y-4">
+          {grouped.map(({ monthKey, weeks }) => {
+            const monthMins = weeks.flatMap((w) => w.days).flatMap((d) => d.entries).reduce((a, e) => a + e.minutes, 0);
+            const isMonthExpanded = expandedMonths.has(monthKey);
 
-              {/* AI summary */}
-              {monthSummaries[monthKey]?.text && (
-                <div style={{ background: "var(--color-accent-light)", border: "1px solid var(--color-accent-border)", borderRadius: 10, padding: "12px 16px", marginBottom: 14, display: "flex", alignItems: "flex-start", gap: 10 }}>
-                  <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1, color: "var(--color-accent)" }}>✦</span>
-                  <p style={{ fontSize: 13, color: "var(--color-accent-text)", lineHeight: 1.6, margin: 0, flex: 1 }}>{monthSummaries[monthKey].text}</p>
-                  <button onClick={() => { navigator.clipboard.writeText(monthSummaries[monthKey].text); flash("✓ Copied"); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-accent-border)", fontSize: 12, flexShrink: 0, padding: "2px 4px" }}>Copy</button>
-                  <button onClick={() => setMonthSummaries((s) => { const n = { ...s }; delete n[monthKey]; return n; })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-accent-border)", fontSize: 14, flexShrink: 0, lineHeight: 1 }}>✕</button>
-                </div>
-              )}
-
-              {/* Weeks */}
-              {weeks.map(({ weekKey, days }) => {
-                const weekMins = days.flatMap((d) => d.entries).reduce((a, e) => a + e.minutes, 0);
-                return (
-                  <div key={weekKey} style={{ marginBottom: 14 }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, padding: "0 2px" }}>
-                      <p style={{ fontSize: 11, fontWeight: 600, color: "var(--color-muted)", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
-                        {weekRangeLabel(weekKey)}
+            return (
+              <div key={monthKey} className="space-y-3">
+                {/* Month Header */}
+                <div className={`flex items-center justify-between p-5 rounded-xl transition-all ${
+                  dark
+                    ? "bg-slate-900/40 backdrop-blur-xl border border-slate-800/50 hover:border-cyan-500/30"
+                    : "bg-white/40 backdrop-blur-xl border border-slate-200/60 hover:border-blue-300/60"
+                }`}>
+                  <button
+                    onClick={() => toggleMonth(monthKey)}
+                    className="flex items-center gap-4 text-left flex-1 min-w-0"
+                  >
+                    {isMonthExpanded
+                      ? <ChevronDown className={`w-5 h-5 flex-shrink-0 ${dark ? "text-cyan-400" : "text-blue-600"}`} />
+                      : <ChevronRight className={`w-5 h-5 flex-shrink-0 ${dark ? "text-slate-500" : "text-slate-400"}`} />
+                    }
+                    <div>
+                      <h3 className={`text-xl font-semibold ${dark ? "text-white" : "text-slate-800"}`}>
+                        {formatMonthLabel(monthKey)}
+                      </h3>
+                      <p className={`text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>
+                        {weeks.length} {weeks.length === 1 ? "week" : "weeks"}
                       </p>
-                      <span style={{ fontSize: 11, color: "var(--color-muted)", fontFamily: "'DM Mono', monospace" }}>{formatDuration(weekMins)}</span>
                     </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      {days.map(({ date, entries: dayEntries }) => {
-                        const dayTotal = dayEntries.reduce((a, e) => a + e.minutes, 0);
-                        return (
-                          <Card key={date} style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }} className="shadow-sm overflow-hidden">
-                            <div
-                              onClick={() => toggleExpanded(date, dayEntries)}
-                              style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", background: "var(--color-surface-raised)", borderBottom: expandedDates.has(date) ? "1px solid var(--color-border-light)" : "none", cursor: "pointer", userSelect: "none" }}
-                            >
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <p style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-secondary)", fontFamily: "'Parkinsans', sans-serif", margin: 0 }}>{formatDateLabel(date)}</p>
-                              </div>
-                              <span style={{ fontSize: 11, color: "var(--color-muted)", whiteSpace: "nowrap" }}>{dayEntries.length} {dayEntries.length === 1 ? "session" : "sessions"}</span>
-                              {hourlyRate > 0 && (
-                                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-secondary)", fontFamily: "'DM Mono', monospace", whiteSpace: "nowrap" }}>
-                                  {formatMoney((dayTotal / 60) * hourlyRate)}
-                                </span>
-                              )}
-                              <div style={{ background: "var(--color-accent-light)", border: "1px solid var(--color-accent-border)", borderRadius: 20, padding: "2px 10px", fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--color-accent)", fontWeight: 600, whiteSpace: "nowrap" }}>
-                                {formatDuration(dayTotal)}
-                              </div>
-                              {expandedDates.has(date) ? <ChevronUp size={14} color="var(--color-muted)" style={{ flexShrink: 0 }} /> : <ChevronDown size={14} color="var(--color-muted)" style={{ flexShrink: 0 }} />}
-                            </div>
-
-                            {expandedDates.has(date) && dayEntries.map((entry, i) => (
-                              <EntryRow key={entry.id} entry={entry} index={i} />
-                            ))}
-                          </Card>
-                        );
-                      })}
+                  </button>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    {hourlyRate > 0 && (
+                      <span className={`text-sm font-semibold font-mono hidden sm:inline ${dark ? "text-slate-300" : "text-slate-600"}`}>
+                        {formatMoney((monthMins / 60) * hourlyRate)}
+                      </span>
+                    )}
+                    {deepseekKey && (
+                      <Button
+                        size="sm" variant="outline"
+                        onClick={() => generateMonthSummary(monthKey, weeks)}
+                        disabled={monthSummaries[monthKey]?.loading}
+                        className="h-7 text-xs hidden sm:inline-flex"
+                        style={{ borderColor: "var(--color-border)", color: "var(--color-secondary)" }}
+                      >
+                        {monthSummaries[monthKey]?.loading ? "Summarising…" : "✦ Summarise"}
+                      </Button>
+                    )}
+                    <Button
+                      size="sm" variant="outline"
+                      onClick={() => exportMonthXLSX(monthKey, weeks)}
+                      className="h-7 text-xs hidden sm:inline-flex"
+                      style={{ borderColor: "var(--color-border)", color: "var(--color-secondary)" }}
+                    >
+                      Export
+                    </Button>
+                    <div className={`text-xl font-mono font-semibold ${dark ? "text-cyan-400" : "text-teal-600"}`}>
+                      {formatDuration(monthMins)}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          );
-        })
+                </div>
+
+                {/* AI summary */}
+                {monthSummaries[monthKey]?.text && (
+                  <div style={{ background: "var(--color-accent-light)", border: "1px solid var(--color-accent-border)", borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1, color: "var(--color-accent)" }}>✦</span>
+                    <p style={{ fontSize: 13, color: "var(--color-accent-text)", lineHeight: 1.6, margin: 0, flex: 1 }}>{monthSummaries[monthKey].text}</p>
+                    <button onClick={() => { navigator.clipboard.writeText(monthSummaries[monthKey].text); flash("✓ Copied"); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-accent-border)", fontSize: 12, flexShrink: 0, padding: "2px 4px" }}>Copy</button>
+                    <button onClick={() => setMonthSummaries((s) => { const n = { ...s }; delete n[monthKey]; return n; })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-accent-border)", fontSize: 14, flexShrink: 0, lineHeight: 1 }}>✕</button>
+                  </div>
+                )}
+
+                {/* Weeks */}
+                {isMonthExpanded && (
+                  <div className="ml-2 sm:ml-4 space-y-3">
+                    {weeks.map(({ weekKey, days }) => {
+                      const weekMins = days.flatMap((d) => d.entries).reduce((a, e) => a + e.minutes, 0);
+                      const isWeekExpanded = expandedWeeks.has(weekKey);
+
+                      return (
+                        <div key={weekKey} className="space-y-2">
+                          {/* Week Header */}
+                          <button
+                            onClick={() => toggleWeek(weekKey)}
+                            className={`w-full flex items-center justify-between p-4 rounded-lg transition-all ${
+                              dark
+                                ? "bg-slate-800/30 border border-slate-700/50 hover:border-slate-600/50"
+                                : "bg-slate-50/50 border border-slate-200/50 hover:border-slate-300/60"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              {isWeekExpanded
+                                ? <ChevronDown className={`w-4 h-4 ${dark ? "text-teal-400" : "text-teal-600"}`} />
+                                : <ChevronRight className={`w-4 h-4 ${dark ? "text-slate-500" : "text-slate-400"}`} />
+                              }
+                              <span className={`text-sm font-semibold ${dark ? "text-slate-300" : "text-slate-700"}`}>
+                                {weekRangeLabel(weekKey)}
+                              </span>
+                            </div>
+                            <div className={`text-lg font-mono font-semibold ${dark ? "text-teal-400" : "text-teal-600"}`}>
+                              {formatDuration(weekMins)}
+                            </div>
+                          </button>
+
+                          {/* Days */}
+                          {isWeekExpanded && (
+                            <div className="ml-2 sm:ml-4 space-y-3">
+                              {days.map(({ date, entries: dayEntries }) => {
+                                const dayTotal = dayEntries.reduce((a, e) => a + e.minutes, 0);
+                                const dateObj = new Date(date + "T12:00:00");
+                                const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
+                                const dayNum = dateObj.getDate();
+                                const monthName = dateObj.toLocaleDateString("en-US", { month: "short" });
+                                const isExpanded = expandedDates.has(date);
+
+                                return (
+                                  <div
+                                    key={date}
+                                    className={`rounded-xl border overflow-hidden transition-all ${
+                                      dark
+                                        ? "bg-slate-900/30 backdrop-blur-xl border-slate-800/50"
+                                        : "bg-white/50 backdrop-blur-xl border-slate-200/50"
+                                    }`}
+                                  >
+                                    {/* Day Header */}
+                                    <div
+                                      onClick={() => toggleExpanded(date, dayEntries)}
+                                      className={`px-5 py-4 cursor-pointer select-none ${
+                                        isExpanded ? `border-b ${dark ? "border-slate-800/50" : "border-slate-200/50"}` : ""
+                                      } ${dark ? "bg-slate-800/20" : "bg-slate-50/50"}`}
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                                          {/* Date block */}
+                                          <div className="text-center flex-shrink-0 w-10">
+                                            <div className={`text-xs font-semibold uppercase tracking-wide ${dark ? "text-slate-500" : "text-slate-400"}`}>{dayName}</div>
+                                            <div className={`text-2xl font-bold leading-tight ${dark ? "text-white" : "text-slate-800"}`}>{dayNum}</div>
+                                            <div className={`text-xs ${dark ? "text-slate-500" : "text-slate-400"}`}>{monthName}</div>
+                                          </div>
+                                          {/* Timeline */}
+                                          <div className="flex-1 min-w-0">
+                                            <div className={`flex justify-between text-xs mb-1 ${dark ? "text-slate-500" : "text-slate-400"}`}>
+                                              <span>8 AM</span><span>12 PM</span><span>4 PM</span><span>8 PM</span>
+                                            </div>
+                                            <div className={`h-3 rounded-full relative overflow-hidden ${dark ? "bg-slate-800/50" : "bg-slate-200/50"}`}>
+                                              {dayEntries.map((entry, i) => {
+                                                const startH = timeToHour(entry.start);
+                                                const endH = timeToHour(entry.end);
+                                                const leftPct = Math.max(0, Math.min(100, ((startH - 8) / 12) * 100));
+                                                const widthPct = Math.max(0, Math.min(100 - leftPct, ((endH - startH) / 12) * 100));
+                                                return (
+                                                  <div
+                                                    key={i}
+                                                    className={`absolute top-0 h-full ${
+                                                      entry.billable !== false
+                                                        ? dark ? "bg-gradient-to-r from-cyan-500/80 to-teal-500/80" : "bg-gradient-to-r from-teal-500/80 to-emerald-500/80"
+                                                        : dark ? "bg-gradient-to-r from-purple-500/60 to-pink-500/60" : "bg-gradient-to-r from-purple-400/60 to-pink-400/60"
+                                                    }`}
+                                                    style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                                                  />
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        </div>
+                                        {/* Right: totals */}
+                                        <div className="text-right flex-shrink-0 ml-4">
+                                          {hourlyRate > 0 && (
+                                            <div className={`text-xs font-mono mb-0.5 ${dark ? "text-slate-400" : "text-slate-500"}`}>
+                                              {formatMoney((dayTotal / 60) * hourlyRate)}
+                                            </div>
+                                          )}
+                                          <div className={`text-xl font-mono font-semibold ${dark ? "text-cyan-400" : "text-teal-600"}`}>
+                                            {formatDuration(dayTotal)}
+                                          </div>
+                                          <p className={`text-xs ${dark ? "text-slate-500" : "text-slate-400"}`}>
+                                            {dayEntries.length} {dayEntries.length === 1 ? "entry" : "entries"}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Entries */}
+                                    {isExpanded && (
+                                      <div className="p-4 space-y-3">
+                                        {dayEntries.map((entry, i) => (
+                                          <EntryRow key={entry.id} entry={entry} index={i} />
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
 
       {/* Hidden file inputs */}

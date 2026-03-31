@@ -13,7 +13,7 @@ export default defineConfig({
         name: "QuestLogger",
         short_name: "QuestLogger",
         description: "Track your work hours and log time entries.",
-        theme_color: "#4f6af5",
+        theme_color: "#0d9488",
         background_color: "#f5f7ff",
         display: "standalone",
         orientation: "portrait",

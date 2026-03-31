@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Base ────────────────────────────────────────────────────── */
+body {
+  background-color: var(--color-bg);
+}
+
 /* ── Light mode ──────────────────────────────────────────────── */
 :root {
   --color-bg: #f5f7ff;
@@ -13,13 +18,13 @@
   --color-text-secondary: #2e2b6b;
   --color-muted: #8a8dba;
   --color-secondary: #5a5d99;
-  --color-accent: #4f6af5;
-  --color-accent-hover: #3a54e0;
-  --color-accent-light: #eef2ff;
-  --color-accent-light-hover: #e0e7ff;
-  --color-accent-border: #c7d2fe;
-  --color-accent-text: #312e81;
-  --color-accent-bright: #818cf8;
+  --color-accent: #0d9488;
+  --color-accent-hover: #0f766e;
+  --color-accent-light: #f0fdfa;
+  --color-accent-light-hover: #ccfbf1;
+  --color-accent-border: #99f6e4;
+  --color-accent-text: #134e4a;
+  --color-accent-bright: #14b8a6;
   --color-nav: #ffffff;
   --color-nav-border: #dce3fa;
   --color-modal: #ffffff;
@@ -40,59 +45,59 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   Dark mode  —  60 / 30 / 10 glassmorphism
+   Dark mode  —  Slate-950 base + cyan-500 glassmorphism
 
-   60 %  Dark neutral-cool void  (#07080f)
-         The dominant base: near-black with a micro cool-blue cast.
-         Most of every screen is this void.
+   60 %  Slate-950 void (#020617)
+         Deep navy-black from the new Figma design.
+         Noise texture + animated orbs add depth.
 
-   30 %  Frosted glass surfaces
-         Cards, nav, inputs are rgba white layers floating over the
-         void. backdrop-filter reveals the aurora beneath them.
+   30 %  Slate-900/800 glass surfaces
+         Cards use slate tones with cyan-500 tinted borders.
+         backdrop-blur for depth and separation.
 
-   10 %  Indigo accent bursts
-         Vivid indigo/violet radial gradients in the background
-         (visible through glass), plus buttons, borders, active states.
+   10 %  Cyan-500 accent (#06b6d4)
+         Shifted from teal-400 → cyan-500 to match new design.
+         Gradient aurora bleeds use cyan tones.
 ──────────────────────────────────────────────────────────────────── */
 .dark {
-  /* ── Base ── */
-  --color-bg: #07080f;
-  --color-surface: rgba(255, 255, 255, 0.045);
-  --color-surface-raised: rgba(255, 255, 255, 0.075);
+  /* ── Base — slate-950 ── */
+  --color-bg: #020617;
+  --color-surface: rgba(15, 23, 42, 0.80);
+  --color-surface-raised: rgba(30, 41, 59, 0.70);
 
-  /* ── Borders — thin luminous glass edges ── */
-  --color-border: rgba(255, 255, 255, 0.09);
-  --color-border-light: rgba(255, 255, 255, 0.045);
+  /* ── Borders — cyan-500 glass edges ── */
+  --color-border: rgba(6, 182, 212, 0.15);
+  --color-border-light: rgba(6, 182, 212, 0.08);
 
-  /* ── Typography — cool-white hierarchy ── */
-  --color-text: #f0f0ff;
-  --color-text-secondary: rgba(218, 222, 255, 0.72);
-  --color-muted: rgba(180, 185, 230, 0.32);
-  --color-secondary: rgba(195, 200, 240, 0.52);
+  /* ── Typography — high-contrast white hierarchy ── */
+  --color-text: #f0f2f5;
+  --color-text-secondary: rgba(210, 220, 232, 0.82);
+  --color-muted: rgba(150, 165, 185, 0.50);
+  --color-secondary: rgba(175, 190, 210, 0.68);
 
-  /* ── Accent — electric blue (10%) ── */
-  --color-accent: #38bdf8;
-  --color-accent-hover: #7dd3fc;
-  --color-accent-light: rgba(14, 165, 233, 0.14);
-  --color-accent-light-hover: rgba(14, 165, 233, 0.24);
-  --color-accent-border: rgba(56, 189, 248, 0.4);
-  --color-accent-text: #bae6fd;
-  --color-accent-bright: #0ea5e9;
+  /* ── Accent — cyan-500 (#06b6d4) ── */
+  --color-accent: #06b6d4;
+  --color-accent-hover: #22d3ee;
+  --color-accent-light: rgba(6, 182, 212, 0.12);
+  --color-accent-light-hover: rgba(6, 182, 212, 0.20);
+  --color-accent-border: rgba(6, 182, 212, 0.30);
+  --color-accent-text: #a5f3fc;
+  --color-accent-bright: #0891b2;
 
-  /* ── Nav glass ── */
-  --color-nav: rgba(255, 255, 255, 0.05);
-  --color-nav-border: rgba(255, 255, 255, 0.07);
+  /* ── Nav — slate-950 panel ── */
+  --color-nav: rgba(2, 6, 23, 0.80);
+  --color-nav-border: rgba(6, 182, 212, 0.10);
 
-  /* ── Modal glass ── */
-  --color-modal: rgba(9, 10, 22, 0.92);
-  --color-modal-overlay: rgba(0, 0, 8, 0.88);
+  /* ── Modal — near-black ── */
+  --color-modal: rgba(2, 6, 23, 0.96);
+  --color-modal-overlay: rgba(0, 0, 0, 0.85);
 
-  /* ── Inputs ── */
-  --color-input-bg: rgba(255, 255, 255, 0.05);
+  /* ── Inputs — slate panel ── */
+  --color-input-bg: rgba(2, 6, 23, 0.60);
 
   /* ── Tags ── */
-  --color-tag-bg: rgba(14, 165, 233, 0.13);
-  --color-tag-text: rgba(186, 230, 253, 0.75);
+  --color-tag-bg: rgba(6, 182, 212, 0.10);
+  --color-tag-text: rgba(165, 243, 252, 0.75);
 
   /* ── Status ── */
   --color-danger: #f87171;
@@ -104,43 +109,70 @@
   --color-success: #4ade80;
 
   /* ── Component helpers ── */
-  --color-toggle-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25),
-                         inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --color-modal-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07),
-                        0 32px 80px rgba(0, 0, 10, 0.85),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --color-toggle-shadow: 0 0 0 1px rgba(6, 182, 212, 0.22),
+                         inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --color-modal-shadow: 0 0 0 1px rgba(6, 182, 212, 0.10),
+                        0 32px 80px rgba(0, 0, 0, 0.90),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-/* ── 60% — aurora background (electric blue bursts behind the glass) ── */
+/* ── Light mode — soft gradient background ──────────────────────── */
+html:not(.dark) body {
+  background-image: linear-gradient(135deg,
+    #f8fafc 0%,
+    rgba(239, 246, 255, 0.60) 50%,
+    rgba(245, 243, 255, 0.50) 100%);
+  background-attachment: fixed;
+}
+
+/* ── 60% — slate void with cyan aurora + noise texture ─────────── */
 html.dark body {
-  background-color: #07080f;
+  background-color: #020617;
   background-image:
-    radial-gradient(ellipse 110% 65% at 105%   0%, rgba(14, 165, 233, 0.28) 0%, transparent 52%),
-    radial-gradient(ellipse  75% 60% at  -5% 105%, rgba(56, 189, 248, 0.16) 0%, transparent 52%),
-    radial-gradient(ellipse  45% 35% at  55%  35%, rgba(2,  132, 199, 0.10) 0%, transparent 60%);
+    /* noise texture — subtle grain for depth */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E"),
+    /* cyan aurora — top-right glow */
+    radial-gradient(ellipse 90% 60% at 95%  -10%, rgba(6, 182, 212, 0.22) 0%, transparent 50%),
+    /* cyan/teal aurora — bottom-left glow */
+    radial-gradient(ellipse 70% 55% at  -5% 105%, rgba(20, 184, 166, 0.14) 0%, transparent 48%),
+    /* deep center glow */
+    radial-gradient(ellipse 50% 40% at  50%  40%, rgba(8, 145, 178, 0.07) 0%, transparent 60%),
+    /* subtle top-to-bottom gradient */
+    linear-gradient(180deg, rgba(6, 182, 212, 0.025) 0%, transparent 40%, rgba(0, 0, 0, 0.3) 100%);
   min-height: 100vh;
 }
 
-/* ── 30% — frosted glass cards ────────────────────────────────── */
+/* ── 30% — glass cards ───────────────────────────────────────────── */
 html.dark .shadow-sm {
-  backdrop-filter: blur(28px) saturate(160%);
-  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(130%);
+  -webkit-backdrop-filter: blur(20px) saturate(130%);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 8px 40px rgba(0, 0, 12, 0.55);
+    0 0 0 1px rgba(6, 182, 212, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 4px 24px rgba(0, 0, 0, 0.60);
 }
 
-/* ── Nav glass ─────────────────────────────────────────────────── */
+/* ── Nav — solid dark bar ────────────────────────────────────────── */
 html.dark [data-nav] {
-  backdrop-filter: blur(32px) saturate(160%);
-  -webkit-backdrop-filter: blur(32px) saturate(160%);
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
 }
 
 /* ── Modal glass ───────────────────────────────────────────────── */
 html.dark [data-modal] {
-  backdrop-filter: blur(40px) saturate(160%);
-  -webkit-backdrop-filter: blur(40px) saturate(160%);
+  backdrop-filter: blur(36px) saturate(140%);
+  -webkit-backdrop-filter: blur(36px) saturate(140%);
+}
+
+/* ── Mobile ─────────────────────────────────────────────────────── */
+@media (max-width: 639px) {
+  .entry-row-main {
+    flex-wrap: wrap;
+  }
+  .entry-row-main .entry-desc {
+    min-width: 100%;
+    order: -1;
+  }
 }
 
 /* ── Animations ────────────────────────────────────────────────── */

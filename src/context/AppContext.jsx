@@ -357,7 +357,7 @@ export function AppProvider({ session, children }) {
     if (removedProjects.length) await supabase.from("projects").delete().in("id", removedProjects);
     if (draftProjects.length > 0) {
       const toUpsert = draftProjects.map((p) => {
-        const obj = { user_id: session.user.id, name: p.name, client_name: p.client_name || "", color: p.color || "#6366f1" };
+        const obj = { user_id: session.user.id, name: p.name, client_name: p.client_name || "", color: p.color || "#14b8a6" };
         if (isUUID(p.id)) obj.id = p.id;
         return obj;
       });
@@ -423,7 +423,7 @@ export function AppProvider({ session, children }) {
 
   // ── Project draft helpers ────────────────────────────────────
   function startDraftNewProject() {
-    setDraftNewProject({ name: "", client_name: "", color: "#6366f1" });
+    setDraftNewProject({ name: "", client_name: "", color: "#14b8a6" });
     setDraftEditingProjectId(null);
   }
   function commitDraftNewProject() {

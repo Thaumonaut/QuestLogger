@@ -83,15 +83,16 @@ export default function EarningsCard() {
                 const done = todayMinsVal >= dailyTarget * 60;
                 return (
                   <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: done ? "var(--color-accent)" : "var(--color-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Daily goal</span>
-                      <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: done ? "var(--color-accent)" : "var(--color-secondary)" }}>
-                        {formatDuration(todayMinsVal)} / {dailyTarget}h {done ? "✓" : `· ${formatDuration(dailyTarget * 60 - todayMinsVal)} left`}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, gap: 8 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: done ? "var(--color-accent)" : "var(--color-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", flexShrink: 0, whiteSpace: "nowrap" }}>Daily goal</span>
+                      <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: done ? "var(--color-accent)" : "var(--color-secondary)", whiteSpace: "nowrap" }}>
+                        {formatDuration(todayMinsVal)} / {dailyTarget}h {done ? "✓" : ""}
                       </span>
                     </div>
                     <div style={{ height: 6, background: "var(--color-tag-bg)", borderRadius: 9999, overflow: "hidden" }}>
                       <div style={{ height: "100%", width: `${pct}%`, background: done ? "var(--color-accent)" : "var(--color-accent-bright)", borderRadius: 9999, transition: "width 0.4s" }} />
                     </div>
+                    {!done && <p style={{ fontSize: 10, color: "var(--color-muted)", textAlign: "right", marginTop: 2, fontFamily: "'DM Mono', monospace" }}>{formatDuration(dailyTarget * 60 - todayMinsVal)} left</p>}
                   </div>
                 );
               })()}
@@ -100,15 +101,16 @@ export default function EarningsCard() {
                 const done = weekMinsVal >= weeklyTarget * 60;
                 return (
                   <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: done ? "var(--color-accent)" : "var(--color-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Weekly goal</span>
-                      <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: done ? "var(--color-accent)" : "var(--color-secondary)" }}>
-                        {formatDuration(weekMinsVal)} / {weeklyTarget}h {done ? "✓" : `· ${formatDuration(weeklyTarget * 60 - weekMinsVal)} left`}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, gap: 8 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: done ? "var(--color-accent)" : "var(--color-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", flexShrink: 0, whiteSpace: "nowrap" }}>Weekly goal</span>
+                      <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: done ? "var(--color-accent)" : "var(--color-secondary)", whiteSpace: "nowrap" }}>
+                        {formatDuration(weekMinsVal)} / {weeklyTarget}h {done ? "✓" : ""}
                       </span>
                     </div>
                     <div style={{ height: 6, background: "var(--color-tag-bg)", borderRadius: 9999, overflow: "hidden" }}>
                       <div style={{ height: "100%", width: `${pct}%`, background: done ? "var(--color-accent)" : "var(--color-accent-bright)", borderRadius: 9999, transition: "width 0.4s" }} />
                     </div>
+                    {!done && <p style={{ fontSize: 10, color: "var(--color-muted)", textAlign: "right", marginTop: 2, fontFamily: "'DM Mono', monospace" }}>{formatDuration(weeklyTarget * 60 - weekMinsVal)} left</p>}
                   </div>
                 );
               })()}

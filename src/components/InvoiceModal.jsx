@@ -214,7 +214,7 @@ export default function InvoiceModal() {
                   {projects.map((p) => (
                     <SelectItem key={p.id} value={String(p.id)} className="focus:bg-[var(--color-accent-light)]">
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color || "#6366f1", display: "inline-block" }} />
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color || "#14b8a6", display: "inline-block" }} />
                         {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
                       </span>
                     </SelectItem>

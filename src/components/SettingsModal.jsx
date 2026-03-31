@@ -81,7 +81,7 @@ function TemplateEditor({ value, onChange, onAddBreak, onChangeBreak, onRemoveBr
   );
 }
 
-const COLORS = ["#6366f1", "#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#ef4444", "#64748b"];
+const COLORS = ["#14b8a6", "#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#ef4444", "#64748b"];
 
 function ProjectEditor({ value, onChange, onSave, onCancel, saveLabel = "Save project" }) {
   const inputCls = "bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)] placeholder:text-[var(--color-muted)] focus-visible:ring-[var(--color-accent)]/40 focus-visible:ring-2 text-sm shadow-sm h-9";
@@ -274,7 +274,7 @@ export default function SettingsModal() {
                 }
                 return (
                   <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--color-surface-raised)", border: "1px solid var(--color-border)", borderRadius: 10, marginTop: 8 }}>
-                    <span style={{ width: 12, height: 12, borderRadius: "50%", background: p.color || "#6366f1", display: "inline-block", flexShrink: 0 }} />
+                    <span style={{ width: 12, height: 12, borderRadius: "50%", background: p.color || "#14b8a6", display: "inline-block", flexShrink: 0 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)", margin: 0 }}>{p.name}</p>
                       {p.client_name && <p style={{ fontSize: 11, color: "var(--color-muted)", margin: "2px 0 0" }}>{p.client_name}</p>}
