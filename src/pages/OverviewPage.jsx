@@ -140,7 +140,7 @@ export default function OverviewPage() {
   const statCardClasses = `relative rounded-xl border p-5 sm:p-6 overflow-hidden transition-all shadow-sm`;
 
   return (
-    <div className="max-w-[720px] mx-auto px-4 sm:px-6 py-8 pb-16">
+    <div className="max-w-[720px] mx-auto px-4 sm:px-6 py-8 pb-24">
       <div className="space-y-6 sm:space-y-8">
         <div className="flex flex-col gap-3 pb-8">
           {/* Row 1: title + month nav */}

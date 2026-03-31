@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useApp } from "../context/AppContext";
 import { useTheme } from "../context/ThemeContext";
 import TimeSelect from "./TimeSelect";
-import { calcWorked, formatDuration, formatDecimal, todayStr, toDisplayTime } from "../lib/utils";
+import { calcWorked, formatDuration, formatDecimal, todayStr, toDisplayTime, makeEmptyForm } from "../lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,6 +17,7 @@ export default function LogHoursForm() {
     updateClockIn, startClockBreak, endClockBreak,
     clockedTick, timeRounding,
     logHoursRef, dateInputRef, deepseekKey, rewriteDescription, rewritingDesc,
+    pendingClockOutForm, clearPendingClockOutForm,
   } = useApp();
   const { theme } = useTheme();
   const dark = theme === "dark";
@@ -43,6 +44,14 @@ export default function LogHoursForm() {
   useEffect(() => {
     if (clockIn) setMode("auto");
   }, [clockIn]);
+
+  // Apply prefilled form from ClockBanner stop
+  useEffect(() => {
+    if (!pendingClockOutForm) return;
+    setForm(pendingClockOutForm);
+    setMode("manual");
+    clearPendingClockOutForm();
+  }, [pendingClockOutForm]);
 
   function onClockOut() {
     const prefilled = handleClockOut();
@@ -540,6 +549,14 @@ export default function LogHoursForm() {
                   )}
                 </div>
                 
+                <button
+                  onClick={() => setForm(makeEmptyForm(settings, templates))}
+                  className={`text-xs font-medium px-3 py-2 rounded-lg border transition-colors ${
+                    dark ? "border-slate-600 text-slate-400 hover:border-slate-500 hover:text-slate-300" : "border-slate-300 text-slate-400 hover:border-slate-400 hover:text-slate-600"
+                  }`}
+                >
+                  Clear
+                </button>
                 <Button
                   onClick={() => handleSubmit(form)}
                   disabled={!form.date || !form.start || !form.end}

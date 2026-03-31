@@ -37,6 +37,9 @@ export function AppProvider({ session, children }) {
     try { return JSON.parse(localStorage.getItem("ql_clock_in") || "null"); } catch { return null; }
   });
   const [clockedTick, setClockedTick] = useState(0);
+  const [pendingClockOutForm, setPendingClockOutForm] = useState(null);
+  const clockInRef = useRef(null);
+  const clockInSyncTimer = useRef(null);
 
   // ── Settings modal state ─────────────────────────────────────
   const [showSettings, setShowSettings] = useState(false);
@@ -76,6 +79,16 @@ export function AppProvider({ session, children }) {
         supabase.from("user_settings").select("*").single(),
         supabase.from("projects").select("*").order("created_at"),
       ]);
+      // Sync clock-in state from DB (handles cross-device tracking)
+      const dbClock = settingsRes.data?.active_clock ?? null;
+      if (dbClock) {
+        setClockIn(dbClock);
+        localStorage.setItem("ql_clock_in", JSON.stringify(dbClock));
+      } else {
+        // DB has no active session — if local has one it was stopped on another device
+        setClockIn(null);
+        localStorage.removeItem("ql_clock_in");
+      }
       const loadedTemplates = (templatesRes.data ?? []).map(normalizeTemplate);
       const loadedSettings = settingsRes.data ? normalizeSettings(settingsRes.data) : {};
       const loadedEntries = (entriesRes.data ?? []).map(normalizeEntry);
@@ -140,6 +153,35 @@ export function AppProvider({ session, children }) {
     const interval = setInterval(checkReminder, 60_000);
     return () => clearInterval(interval);
   }, [reminderTime, session, entries]);
+
+  // ── Sync clockIn to DB (debounced for description edits, immediate for start/stop) ──
+  useEffect(() => {
+    clockInRef.current = clockIn;
+    if (!session?.user?.id) return;
+    if (clockInSyncTimer.current) clearTimeout(clockInSyncTimer.current);
+    const delay = clockIn === null ? 0 : 1500;
+    clockInSyncTimer.current = setTimeout(() => {
+      supabase.from("user_settings").update({ active_clock: clockIn }).eq("user_id", session.user.id);
+    }, delay);
+    return () => { if (clockInSyncTimer.current) clearTimeout(clockInSyncTimer.current); };
+  }, [clockIn, session?.user?.id]);
+
+  // ── Re-sync clock state when tab becomes visible (cross-device) ──
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    async function onVisible() {
+      if (document.hidden) return;
+      const { data } = await supabase.from("user_settings").select("active_clock").eq("user_id", session.user.id).single();
+      const dbClock = data?.active_clock ?? null;
+      if (JSON.stringify(dbClock) !== JSON.stringify(clockInRef.current)) {
+        setClockIn(dbClock);
+        if (dbClock) localStorage.setItem("ql_clock_in", JSON.stringify(dbClock));
+        else localStorage.removeItem("ql_clock_in");
+      }
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [session?.user?.id]);
 
   // ── Capture Google provider_token when user was already signed in ──
   // loadData only runs on user ID change. After the Sheets OAuth redirect
@@ -908,6 +950,8 @@ export function AppProvider({ session, children }) {
     // clock
     clockIn, clockedTick, handleClockIn, handleClockOut, clockedElapsed, breakElapsed,
     updateClockIn, startClockBreak, endClockBreak,
+    clockOutAndFill: () => { const p = handleClockOut(); if (p) setPendingClockOutForm(p); },
+    pendingClockOutForm, clearPendingClockOutForm: () => setPendingClockOutForm(null),
     // entries
     handleSubmit, handleDelete, saveInlineEdit, duplicateEntry,
     inlineEditId, inlineForm,

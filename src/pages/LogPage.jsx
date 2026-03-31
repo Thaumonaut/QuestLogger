@@ -69,7 +69,7 @@ export default function LogPage() {
   }
 
   return (
-    <div className="max-w-[720px] mx-auto px-4 sm:px-6 py-8 pb-16">
+    <div className="max-w-[720px] mx-auto px-4 sm:px-6 py-8 pb-24">
 
       {/* LocalStorage migration banner */}
       {localImportBanner && (

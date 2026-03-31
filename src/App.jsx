@@ -7,6 +7,7 @@ import { AppProvider } from "./context/AppContext";
 import Nav from "./components/Nav";
 import SettingsModal from "./components/SettingsModal";
 import InvoiceModal from "./components/InvoiceModal";
+import ClockBanner from "./components/ClockBanner";
 import LogPage from "./pages/LogPage";
 import OverviewPage from "./pages/OverviewPage";
 
@@ -47,6 +48,7 @@ function AppLayout({ session }) {
           <Nav />
           <SettingsModal />
           <InvoiceModal />
+          <ClockBanner />
           <Routes>
             <Route path="/" element={<LogPage />} />
             <Route path="/overview" element={<OverviewPage />} />
