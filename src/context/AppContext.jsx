@@ -262,7 +262,7 @@ export function AppProvider({ session, children }) {
       billable: inlineForm.billable !== false,
     }).eq("id", inlineEditId);
     if (error) { flash("✗ Failed to save entry"); return; }
-    setEntries((prev) => prev.map((e) => e.id === inlineEditId ? { ...e, ...inlineForm, minutes } : e));
+    setEntries((prev) => prev.map((e) => e.id === inlineEditId ? { ...e, ...inlineForm, project_ids: inlineForm.projectIds || [], minutes } : e));
     setInlineEditId(null);
     setInlineForm(null);
   }
