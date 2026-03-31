@@ -37,9 +37,10 @@ export function AppProvider({ session, children }) {
     try { return JSON.parse(localStorage.getItem("ql_clock_in") || "null"); } catch { return null; }
   });
   const [clockedTick, setClockedTick] = useState(0);
-  const [pendingClockOutForm, setPendingClockOutForm] = useState(null);
+  const [pendingEntry, setPendingEntry] = useState(null);
   const clockInRef = useRef(null);
   const clockInSyncTimer = useRef(null);
+  const clockInFromDBRef = useRef(false); // true when setClockIn came from a DB poll — skip write-back
 
   // ── Settings modal state ─────────────────────────────────────
   const [showSettings, setShowSettings] = useState(false);
@@ -79,15 +80,15 @@ export function AppProvider({ session, children }) {
         supabase.from("user_settings").select("*").single(),
         supabase.from("projects").select("*").order("created_at"),
       ]);
-      // Sync clock-in state from DB (handles cross-device tracking)
+      // Sync clock-in state from DB (handles cross-device tracking).
+      // Only override local state if DB has an active session; if DB is null
+      // it might just mean this device hasn't synced yet — visibilitychange
+      // handles the "stopped on another device" case after initial load.
       const dbClock = settingsRes.data?.active_clock ?? null;
-      if (dbClock) {
+      if (dbClock && !dbClock.stopped) {
+        clockInFromDBRef.current = true;
         setClockIn(dbClock);
         localStorage.setItem("ql_clock_in", JSON.stringify(dbClock));
-      } else {
-        // DB has no active session — if local has one it was stopped on another device
-        setClockIn(null);
-        localStorage.removeItem("ql_clock_in");
       }
       const loadedTemplates = (templatesRes.data ?? []).map(normalizeTemplate);
       const loadedSettings = settingsRes.data ? normalizeSettings(settingsRes.data) : {};
@@ -108,7 +109,7 @@ export function AppProvider({ session, children }) {
         const expiry = Date.now() + 3500 * 1000;
         setGoogleToken(session.provider_token);
         setGoogleTokenExpiry(expiry);
-        supabase.from("user_settings").upsert({
+        await supabase.from("user_settings").upsert({
           user_id: session.user.id,
           google_access_token: session.provider_token,
           google_token_expiry: expiry,
@@ -154,33 +155,55 @@ export function AppProvider({ session, children }) {
     return () => clearInterval(interval);
   }, [reminderTime, session, entries]);
 
-  // ── Sync clockIn to DB (debounced for description edits, immediate for start/stop) ──
+  // ── Sync active clock to DB (only for active sessions — clock-out is handled explicitly) ──
   useEffect(() => {
     clockInRef.current = clockIn;
     if (!session?.user?.id) return;
+    if (clockInFromDBRef.current) {
+      clockInFromDBRef.current = false;
+      return;
+    }
+    if (!clockIn) return; // clock-out writes { stopped: true } explicitly in handleClockOut
     if (clockInSyncTimer.current) clearTimeout(clockInSyncTimer.current);
-    const delay = clockIn === null ? 0 : 1500;
-    clockInSyncTimer.current = setTimeout(() => {
-      supabase.from("user_settings").update({ active_clock: clockIn }).eq("user_id", session.user.id);
-    }, delay);
+    clockInSyncTimer.current = setTimeout(async () => {
+      await supabase.from("user_settings").update({ active_clock: clockIn }).eq("user_id", session.user.id);
+    }, 0);
     return () => { if (clockInSyncTimer.current) clearTimeout(clockInSyncTimer.current); };
   }, [clockIn, session?.user?.id]);
 
-  // ── Re-sync clock state when tab becomes visible (cross-device) ──
+  // ── Re-sync clock state from DB (cross-device) ──
+  // Poll every 10s so two open browsers stay in sync without needing a tab switch.
+  // { stopped: true } sentinel means explicit clock-out (vs null = not yet synced).
   useEffect(() => {
     if (!session?.user?.id) return;
-    async function onVisible() {
-      if (document.hidden) return;
+    async function syncFromDB() {
       const { data } = await supabase.from("user_settings").select("active_clock").eq("user_id", session.user.id).single();
       const dbClock = data?.active_clock ?? null;
-      if (JSON.stringify(dbClock) !== JSON.stringify(clockInRef.current)) {
+      const localClock = clockInRef.current;
+      if (dbClock?.stopped === true) {
+        // Explicitly stopped on another device
+        if (localClock !== null) {
+          clockInFromDBRef.current = true;
+          setClockIn(null);
+          localStorage.removeItem("ql_clock_in");
+        }
+      } else if (dbClock !== null && JSON.stringify(dbClock) !== JSON.stringify(localClock)) {
+        // Active session from another device
+        clockInFromDBRef.current = true;
         setClockIn(dbClock);
-        if (dbClock) localStorage.setItem("ql_clock_in", JSON.stringify(dbClock));
-        else localStorage.removeItem("ql_clock_in");
+        localStorage.setItem("ql_clock_in", JSON.stringify(dbClock));
       }
+      // dbClock === null → unknown/not yet synced, leave local state alone
+    }
+    function onVisible() {
+      if (!document.hidden) syncFromDB();
     }
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    const pollInterval = setInterval(syncFromDB, 10_000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(pollInterval);
+    };
   }, [session?.user?.id]);
 
   // ── Capture Google provider_token when user was already signed in ──
@@ -195,7 +218,7 @@ export function AppProvider({ session, children }) {
       user_id: session.user.id,
       google_access_token: session.provider_token,
       google_token_expiry: expiry,
-    });
+    }).then();
   }, [session?.provider_token]);
 
   // ── Clock tick ───────────────────────────────────────────────
@@ -212,6 +235,9 @@ export function AppProvider({ session, children }) {
     const data = { start, date: todayStr(), description: "", projectIds: [], billable: true, breaks: [], activeBreak: null };
     localStorage.setItem("ql_clock_in", JSON.stringify(data));
     setClockIn(data);
+    if (session?.user?.id) {
+      supabase.from("user_settings").update({ active_clock: data }).eq("user_id", session.user.id).then();
+    }
   }
 
   function updateClockIn(fields) {
@@ -259,6 +285,9 @@ export function AppProvider({ session, children }) {
     };
     localStorage.removeItem("ql_clock_in");
     setClockIn(null);
+    if (session?.user?.id) {
+      supabase.from("user_settings").update({ active_clock: { stopped: true } }).eq("user_id", session.user.id).then();
+    }
     return prefilled;
   }
 
@@ -950,8 +979,10 @@ export function AppProvider({ session, children }) {
     // clock
     clockIn, clockedTick, handleClockIn, handleClockOut, clockedElapsed, breakElapsed,
     updateClockIn, startClockBreak, endClockBreak,
-    clockOutAndFill: () => { const p = handleClockOut(); if (p) setPendingClockOutForm(p); },
-    pendingClockOutForm, clearPendingClockOutForm: () => setPendingClockOutForm(null),
+    clockOutAndFill: () => { const p = handleClockOut(); if (p) setPendingEntry(p); },
+    pendingEntry,
+    updatePendingEntry: (fields) => setPendingEntry((prev) => prev ? { ...prev, ...fields } : prev),
+    clearPendingEntry: () => setPendingEntry(null),
     // entries
     handleSubmit, handleDelete, saveInlineEdit, duplicateEntry,
     inlineEditId, inlineForm,

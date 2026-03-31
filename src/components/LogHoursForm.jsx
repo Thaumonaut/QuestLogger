@@ -13,11 +13,11 @@ export default function LogHoursForm() {
   const {
     form, setForm, setField, addBreak, updateBreak, removeBreak,
     handleSubmit, applyTemplate, templates, projects, settings,
-    clockIn, handleClockIn, handleClockOut, clockedElapsed, breakElapsed,
+    clockIn, handleClockIn, clockedElapsed, breakElapsed,
     updateClockIn, startClockBreak, endClockBreak,
-    clockedTick, timeRounding,
+    clockOutAndFill, clockedTick, timeRounding,
     logHoursRef, dateInputRef, deepseekKey, rewriteDescription, rewritingDesc,
-    pendingClockOutForm, clearPendingClockOutForm,
+    pendingEntry, updatePendingEntry, clearPendingEntry,
   } = useApp();
   const { theme } = useTheme();
   const dark = theme === "dark";
@@ -42,24 +42,9 @@ export default function LogHoursForm() {
   }, [clockIn?.description]);
 
   useEffect(() => {
-    if (clockIn) setMode("auto");
-  }, [clockIn]);
+    if (clockIn || pendingEntry) setMode("auto");
+  }, [clockIn, pendingEntry]);
 
-  // Apply prefilled form from ClockBanner stop
-  useEffect(() => {
-    if (!pendingClockOutForm) return;
-    setForm(pendingClockOutForm);
-    setMode("manual");
-    clearPendingClockOutForm();
-  }, [pendingClockOutForm]);
-
-  function onClockOut() {
-    const prefilled = handleClockOut();
-    if (prefilled) {
-      setForm(prefilled);
-      setMode("manual");
-    }
-  }
 
   const previewMins = calcWorked(form.start, form.end, form.breaks);
 
@@ -103,8 +88,8 @@ export default function LogHoursForm() {
             {["manual", "auto"].map((m) => (
               <button
                 key={m}
-                onClick={() => !clockIn && setMode(m)}
-                disabled={!!clockIn}
+                onClick={() => !clockIn && !pendingEntry && setMode(m)}
+                disabled={!!clockIn || !!pendingEntry}
                 className={`px-4 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition-all ${
                   mode === m
                     ? dark
@@ -113,7 +98,7 @@ export default function LogHoursForm() {
                     : dark
                     ? "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
                     : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
-                } ${clockIn ? "cursor-default opacity-60" : "cursor-pointer"}`}
+                } ${(clockIn || pendingEntry) ? "cursor-default opacity-60" : "cursor-pointer"}`}
               >
                 {m === "manual" ? "Manual" : "Automatic"}
               </button>
@@ -124,11 +109,13 @@ export default function LogHoursForm() {
         {/* ── AUTO MODE ── */}
         {mode === "auto" && (
           <div className="py-4">
-            {!clockIn ? (
+
+            {/* State 1: idle — not clocked in, nothing pending */}
+            {!clockIn && !pendingEntry && (
               <div className="flex flex-col items-center gap-5 text-center py-6 sm:py-10">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-lg ${
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-2 ${
                   dark ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-400" : "bg-teal-50 border-teal-100 text-teal-600"
-                } border-2`}>
+                }`}>
                   <Clock className="w-8 h-8" />
                 </div>
                 <div>
@@ -149,7 +136,10 @@ export default function LogHoursForm() {
                   Clock In
                 </Button>
               </div>
-            ) : (
+            )}
+
+            {/* State 2: actively clocked in */}
+            {clockIn && (
               <div className="flex flex-col gap-5">
                 <div className={`p-5 sm:p-6 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 border ${
                   dark ? "bg-cyan-950/30 border-cyan-500/20" : "bg-teal-50 border-teal-100"
@@ -165,16 +155,29 @@ export default function LogHoursForm() {
                       {clockIn.date !== todayStr() ? ` · ${clockIn.date}` : ""}
                     </p>
                   </div>
-                  <Button
-                    onClick={onClockOut}
-                    className={`w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold shadow-lg transition-all ${
-                      dark
-                        ? "bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-red-500/20 hover:shadow-red-500/40 hover:from-red-400 hover:to-orange-400 text-white border-none"
-                        : "bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-red-500/20 hover:from-red-700 hover:to-orange-700 text-white border-none"
-                    }`}
-                  >
-                    Clock Out
-                  </Button>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Button
+                      onClick={clockIn?.activeBreak ? endClockBreak : startClockBreak}
+                      variant="outline"
+                      className={`flex-1 sm:flex-none px-5 py-2.5 h-auto rounded-xl text-sm font-semibold transition-all ${
+                        clockIn?.activeBreak
+                          ? dark ? "border-orange-500/50 text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 border" : "border-orange-400 text-orange-700 bg-orange-50 hover:bg-orange-100 border"
+                          : dark ? "border-slate-600 text-slate-300 bg-slate-800/40 hover:bg-slate-700/60 border" : "border-slate-300 text-slate-700 bg-slate-50 hover:bg-slate-100 border"
+                      }`}
+                    >
+                      {clockIn?.activeBreak ? "End Break" : "Break"}
+                    </Button>
+                    <Button
+                      onClick={clockOutAndFill}
+                      className={`flex-1 sm:flex-none px-6 py-2.5 h-auto rounded-xl text-sm font-semibold shadow-lg transition-all ${
+                        dark
+                          ? "bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-red-500/20 hover:shadow-red-500/40 hover:from-red-400 hover:to-orange-400 border-none"
+                          : "bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-red-500/20 hover:from-red-700 hover:to-orange-700 border-none"
+                      }`}
+                    >
+                      Clock Out
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-4 mt-2">
@@ -206,9 +209,7 @@ export default function LogHoursForm() {
                                 : "bg-white/80 border-slate-200 text-teal-600 hover:enabled:bg-slate-50 hover:enabled:border-teal-300"
                             }`}
                           >
-                            {rewritingDesc ? (
-                              <><span className="w-2 h-2 rounded-full border border-current border-t-transparent animate-spin" /> Rewriting</>
-                            ) : "✦ Rewrite"}
+                            {rewritingDesc ? (<><span className="w-2 h-2 rounded-full border border-current border-t-transparent animate-spin" /> Rewriting</>) : "✦ Rewrite"}
                           </button>
                         )}
                       </div>
@@ -217,13 +218,8 @@ export default function LogHoursForm() {
                           {projects.map((p) => {
                             const selected = (clockIn.projectIds || []).includes(p.id);
                             return (
-                              <button
-                                key={p.id}
-                                type="button"
-                                onClick={() => {
-                                  const ids = clockIn.projectIds || [];
-                                  updateClockIn({ projectIds: selected ? ids.filter((id) => id !== p.id) : [...ids, p.id] });
-                                }}
+                              <button key={p.id} type="button"
+                                onClick={() => { const ids = clockIn.projectIds || []; updateClockIn({ projectIds: selected ? ids.filter((id) => id !== p.id) : [...ids, p.id] }); }}
                                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${selected ? "opacity-100" : "opacity-50 hover:opacity-75"}`}
                                 style={selected ? { backgroundColor: p.color + "22", color: p.color, borderColor: p.color + "66" } : { borderColor: dark ? "#475569" : "#e2e8f0", color: dark ? "#94a3b8" : "#64748b" }}
                               >
@@ -234,93 +230,156 @@ export default function LogHoursForm() {
                           })}
                         </div>
                       )}
-                      
                       <label className="flex items-center gap-2 cursor-pointer mt-3">
-                        <Checkbox
-                          id="clock-billable"
-                          checked={clockIn.billable !== false}
+                        <Checkbox id="clock-billable" checked={clockIn.billable !== false}
                           onCheckedChange={(v) => updateClockIn({ billable: !!v })}
-                          className={`w-5 h-5 rounded border-2 cursor-pointer transition-all ${
-                            dark
-                              ? "border-slate-700 data-[state=checked]:bg-gradient-to-br data-[state=checked]:from-cyan-500 data-[state=checked]:to-teal-500 data-[state=checked]:border-cyan-500"
-                              : "border-slate-300 data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
-                          }`}
+                          className={`w-5 h-5 rounded border-2 cursor-pointer transition-all ${dark ? "border-slate-700 data-[state=checked]:bg-gradient-to-br data-[state=checked]:from-cyan-500 data-[state=checked]:to-teal-500 data-[state=checked]:border-cyan-500" : "border-slate-300 data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"}`}
                         />
                         <span className={`text-sm font-medium ${dark ? "text-slate-300" : "text-slate-600"}`}>Billable</span>
                       </label>
                     </div>
                   </div>
-
-                  {/* Breaks in auto mode */}
-                  <div className={subCardCls}>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <span className={`font-semibold ${dark ? "text-white" : "text-slate-800"}`}>Breaks</span>
+                  {(clockIn.breaks || []).length > 0 && (
+                    <div className={subCardCls}>
+                      <span className={`text-sm font-semibold ${dark ? "text-slate-400" : "text-slate-600"}`}>Breaks</span>
+                      <div className="space-y-2 mt-3">
+                        {(clockIn.breaks || []).map((b) => {
+                          const mins = (b.end.split(":").reduce((a, v, i) => a + (i === 0 ? +v * 60 : +v), 0)) - (b.start.split(":").reduce((a, v, i) => a + (i === 0 ? +v * 60 : +v), 0));
+                          return (
+                            <div key={b.id} className={`flex items-center gap-2 p-2.5 rounded-lg text-sm font-medium ${dark ? "bg-slate-800/50 text-slate-300" : "bg-slate-100 text-slate-600"}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${dark ? "bg-slate-500" : "bg-slate-400"}`} />
+                              {toDisplayTime(b.start)} – {toDisplayTime(b.end)}
+                              <span className={`ml-auto text-xs ${dark ? "text-slate-500" : "text-slate-400"}`}>({mins}m)</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                    
-                    <div className="space-y-3">
-                      {(clockIn.breaks || []).length > 0 && (
-                        <div className="space-y-2 mb-4">
-                          {(clockIn.breaks || []).map((b) => {
-                            const [sh, sm] = b.start.split(":").map(Number);
-                            const [eh, em] = b.end.split(":").map(Number);
-                            const mins = (eh * 60 + em) - (sh * 60 + sm);
-                            return (
-                              <div key={b.id} className={`flex items-center gap-2 p-2.5 rounded-lg text-sm font-medium ${
-                                dark ? "bg-slate-800/50 text-slate-300" : "bg-slate-100 text-slate-600"
-                              }`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${dark ? "bg-slate-500" : "bg-slate-400"}`} />
-                                {toDisplayTime(b.start)} – {toDisplayTime(b.end)}
-                                <span className={`ml-auto text-xs ${dark ? "text-slate-500" : "text-slate-400"}`}>({mins}m)</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      
-                      {clockIn.activeBreak ? (
-                        <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-inner ${
-                          dark ? "bg-orange-500/10 border-orange-500/20" : "bg-orange-50 border-orange-200"
-                        }`}>
-                          <div>
-                            <p className={`font-semibold ${dark ? "text-orange-400" : "text-orange-700"}`}>
-                              On break · {breakElapsed()}
-                            </p>
-                            <p className={`text-xs mt-0.5 ${dark ? "text-orange-400/60" : "text-orange-700/60"}`}>
-                              Started at {toDisplayTime(clockIn.activeBreak.start)}
-                            </p>
-                          </div>
-                          <Button
-                            onClick={endClockBreak}
-                            variant="outline"
-                            className={`px-4 text-xs font-bold border ${
-                              dark 
-                                ? "border-orange-500/30 text-orange-400 hover:bg-orange-500/20 bg-transparent" 
-                                : "border-orange-300 text-orange-700 hover:bg-orange-100 bg-white"
-                            }`}
-                          >
-                            End Break
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          onClick={startClockBreak}
-                          variant="outline"
-                          className={`w-full py-2.5 flex items-center justify-center gap-2 border-dashed ${
-                            dark 
-                              ? "border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" 
-                              : "border-slate-300 text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-                          } bg-transparent`}
-                        >
-                          <Plus className="w-4 h-4" /> Start Break
-                        </Button>
-                      )}
+                  )}
+                  {clockIn.activeBreak && (
+                    <div className={`p-4 rounded-xl border ${dark ? "bg-orange-500/10 border-orange-500/20" : "bg-orange-50 border-orange-200"}`}>
+                      <p className={`font-semibold ${dark ? "text-orange-400" : "text-orange-700"}`}>On break · {breakElapsed()}</p>
+                      <p className={`text-xs mt-0.5 ${dark ? "text-orange-400/60" : "text-orange-700/60"}`}>Started at {toDisplayTime(clockIn.activeBreak.start)}</p>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
+
+            {/* State 3: session ended — review & save */}
+            {!clockIn && pendingEntry && (
+              <div className="flex flex-col gap-4">
+                {/* Session summary */}
+                <div className={`p-5 sm:p-6 rounded-xl border ${dark ? "bg-slate-800/40 border-slate-700/50" : "bg-slate-50/80 border-slate-200"}`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <svg className={`w-4 h-4 ${dark ? "text-teal-400" : "text-teal-600"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className={`text-xs font-semibold uppercase tracking-wider ${dark ? "text-teal-400/80" : "text-teal-600/80"}`}>Session complete</span>
+                  </div>
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className={`text-3xl sm:text-4xl font-bold font-mono ${dark ? "text-white" : "text-slate-800"}`}>
+                      {formatDuration(pendingEntry.minutes)}
+                    </span>
+                    <span className={`text-sm font-medium ${dark ? "text-slate-400" : "text-slate-500"}`}>
+                      {toDisplayTime(pendingEntry.start)} – {toDisplayTime(pendingEntry.end)}
+                    </span>
+                  </div>
+                  {(pendingEntry.breaks || []).length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {pendingEntry.breaks.map((b) => {
+                        const mins = (b.end.split(":").reduce((a, v, i) => a + (i === 0 ? +v * 60 : +v), 0)) - (b.start.split(":").reduce((a, v, i) => a + (i === 0 ? +v * 60 : +v), 0));
+                        return (
+                          <span key={b.id} className={`text-xs px-2 py-0.5 rounded-full border font-medium ${dark ? "bg-slate-700/50 border-slate-600 text-slate-400" : "bg-slate-100 border-slate-200 text-slate-500"}`}>
+                            break {toDisplayTime(b.start)}–{toDisplayTime(b.end)} ({mins}m)
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Editable details */}
+                <div className={subCardCls}>
+                  <div className="space-y-4">
+                    <div>
+                      <Textarea
+                        value={pendingEntry.description || ""}
+                        onChange={(e) => updatePendingEntry({ description: e.target.value })}
+                        placeholder="What did you work on?"
+                        className={`${inputClass} resize-none overflow-hidden min-h-[80px]`}
+                        onInput={(e) => { e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
+                      />
+                      {deepseekKey && (
+                        <button
+                          onClick={() => rewriteDescription(pendingEntry.description, (v) => updatePendingEntry({ description: v }))}
+                          disabled={rewritingDesc || !pendingEntry.description?.trim()}
+                          className={`mt-1.5 flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border transition-all disabled:opacity-40 disabled:cursor-not-allowed ${dark ? "bg-slate-800/80 border-slate-700 text-cyan-400 hover:enabled:bg-slate-700 hover:enabled:border-cyan-500/50" : "bg-white/80 border-slate-200 text-teal-600 hover:enabled:bg-slate-50 hover:enabled:border-teal-300"}`}
+                        >
+                          {rewritingDesc ? (<><span className="w-2 h-2 rounded-full border border-current border-t-transparent animate-spin" /> Rewriting</>) : "✦ Rewrite"}
+                        </button>
+                      )}
+                    </div>
+                    {projects.length > 0 && (
+                      <div className={`flex flex-wrap gap-2 p-3 rounded-lg border ${dark ? "bg-slate-900/50 border-slate-700/50" : "bg-white/80 border-slate-200"}`}>
+                        {projects.map((p) => {
+                          const selected = (pendingEntry.projectIds || []).includes(p.id);
+                          return (
+                            <button key={p.id} type="button"
+                              onClick={() => { const ids = pendingEntry.projectIds || []; updatePendingEntry({ projectIds: selected ? ids.filter((id) => id !== p.id) : [...ids, p.id] }); }}
+                              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${selected ? "opacity-100" : "opacity-50 hover:opacity-75"}`}
+                              style={selected ? { backgroundColor: p.color + "22", color: p.color, borderColor: p.color + "66" } : { borderColor: dark ? "#475569" : "#e2e8f0", color: dark ? "#94a3b8" : "#64748b" }}
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.color || "#14b8a6" }} />
+                              {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox id="pending-billable" checked={pendingEntry.billable !== false}
+                        onCheckedChange={(v) => updatePendingEntry({ billable: !!v })}
+                        className={`w-5 h-5 rounded border-2 cursor-pointer transition-all ${dark ? "border-slate-700 data-[state=checked]:bg-gradient-to-br data-[state=checked]:from-cyan-500 data-[state=checked]:to-teal-500 data-[state=checked]:border-cyan-500" : "border-slate-300 data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"}`}
+                      />
+                      <span className={`text-sm font-medium ${dark ? "text-slate-300" : "text-slate-600"}`}>Billable</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2`}>
+                  <Button
+                    onClick={() => { handleSubmit(pendingEntry); clearPendingEntry(); }}
+                    disabled={!pendingEntry.date || !pendingEntry.start || !pendingEntry.end}
+                    className={`flex-1 py-3 h-auto rounded-xl text-sm font-semibold shadow-lg transition-all disabled:opacity-50 ${
+                      dark
+                        ? "bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:from-cyan-400 hover:to-teal-400 border-none"
+                        : "bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-teal-500/30 hover:from-teal-700 hover:to-emerald-700 border-none"
+                    }`}
+                  >
+                    Save Entry
+                  </Button>
+                  <button
+                    onClick={() => { clearPendingEntry(); handleClockIn(); }}
+                    className={`flex-1 py-3 rounded-xl text-sm font-semibold border transition-colors ${
+                      dark ? "border-slate-600 text-slate-300 hover:border-slate-500 hover:text-white" : "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900"
+                    }`}
+                  >
+                    Clock In Again
+                  </button>
+                  <button
+                    onClick={clearPendingEntry}
+                    className={`sm:w-auto py-3 px-4 rounded-xl text-sm font-medium transition-colors ${
+                      dark ? "text-slate-500 hover:text-slate-400" : "text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    Discard
+                  </button>
+                </div>
+              </div>
+            )}
+
           </div>
         )}
 
