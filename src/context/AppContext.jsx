@@ -96,7 +96,7 @@ export function AppProvider({ session, children }) {
       } catch {}
     }
     loadData();
-  }, [session]);
+  }, [session?.user?.id]);
 
   // ── Reminder notifications ───────────────────────────────────
   useEffect(() => {
