@@ -336,7 +336,7 @@ export default function EntryRow({ entry, index }) {
           return (
             <div
               key={i}
-              className={`absolute top-0 h-full ${dark ? "bg-slate-900" : "bg-white"}`}
+              className={`absolute top-0 h-full ${dark ? "bg-orange-500/70" : "bg-orange-400/70"}`}
               style={{ left: `${bLeft}%`, width: `${bWidth}%` }}
             />
           );

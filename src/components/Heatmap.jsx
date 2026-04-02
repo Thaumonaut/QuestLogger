@@ -105,7 +105,9 @@ export default function Heatmap({ entries }) {
                   if (!cell) return <div key={row} style={{ width: CELL, height: CELL }} />;
                   const intensity = getIntensity(cell.mins);
                   const color = getCellColor(intensity);
-                  const isToday = cell.date === new Date().toISOString().split("T")[0];
+                  const now = new Date();
+                  const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+                  const isToday = cell.date === todayLocal;
                   return (
                     <div
                       key={row}

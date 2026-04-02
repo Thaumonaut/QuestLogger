@@ -5,7 +5,7 @@ import LogHoursForm from "../components/LogHoursForm";
 import EntryRow from "../components/EntryRow";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatMonthLabel, formatDuration, formatMoney, weekRangeLabel } from "../lib/utils";
+import { formatMonthLabel, formatDuration, formatMoney, weekRangeLabel, unpaidBreakMins } from "../lib/utils";
 
 function timeToHour(t) {
   if (!t) return 8;
@@ -284,7 +284,47 @@ export default function LogPage() {
                                                   />
                                                 );
                                               })}
+                                              {dayEntries.flatMap((entry, i) =>
+                                                (entry.breaks || []).filter((b) => b.unpaid).map((b, j) => {
+                                                  const bLeft = Math.max(0, ((timeToHour(b.start) - 8) / 12) * 100);
+                                                  const bWidth = Math.max(0, ((timeToHour(b.end) - timeToHour(b.start)) / 12) * 100);
+                                                  return (
+                                                    <div key={`${i}-${j}`}
+                                                      className={`absolute top-0 h-full ${dark ? "bg-orange-500/70" : "bg-orange-400/70"}`}
+                                                      style={{ left: `${bLeft}%`, width: `${bWidth}%` }}
+                                                    />
+                                                  );
+                                                })
+                                              )}
                                             </div>
+                                            {/* Breakdown summary */}
+                                            {(() => {
+                                              const billMins = dayEntries.filter((e) => e.billable !== false).reduce((a, e) => a + e.minutes, 0);
+                                              const nonBillMins = dayEntries.filter((e) => e.billable === false).reduce((a, e) => a + e.minutes, 0);
+                                              const brkMins = dayEntries.reduce((a, e) => a + unpaidBreakMins(e), 0);
+                                              return (
+                                                <div className="flex items-center gap-3 mt-1.5">
+                                                  {billMins > 0 && (
+                                                    <span className="flex items-center gap-1">
+                                                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dark ? "bg-cyan-500" : "bg-teal-500"}`} />
+                                                      <span className={`text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{formatDuration(billMins)}</span>
+                                                    </span>
+                                                  )}
+                                                  {nonBillMins > 0 && (
+                                                    <span className="flex items-center gap-1">
+                                                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dark ? "bg-purple-500" : "bg-purple-400"}`} />
+                                                      <span className={`text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{formatDuration(nonBillMins)}</span>
+                                                    </span>
+                                                  )}
+                                                  {brkMins > 0 && (
+                                                    <span className="flex items-center gap-1">
+                                                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dark ? "bg-orange-500" : "bg-orange-400"}`} />
+                                                      <span className={`text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{brkMins}m break</span>
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              );
+                                            })()}
                                           </div>
                                         </div>
                                         {/* Right: totals */}
