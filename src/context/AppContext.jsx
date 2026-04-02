@@ -686,7 +686,7 @@ export function AppProvider({ session, children }) {
     flash(`✓ ${formatMonthLabel(monthKey)} exported`);
   }
 
-  async function buildXLSX(days, label) {
+  async function buildXLSX(days, label, summary = "") {
     const { default: ExcelJS } = await import("exceljs");
     const hasRate = hourlyRate > 0;
     const projectMap = new Map(projects.map((p) => [p.id, p]));
@@ -757,12 +757,21 @@ export function AppProvider({ session, children }) {
     const totalCells = hasRate ? ["TOTAL", "", "", "", "", "", "", "", formatMoney(grandEarned), formatDuration(grandMins), ""] : ["TOTAL", "", "", "", "", "", "", formatDuration(grandMins), ""];
     const totalRow = ws.addRow(totalCells); totalRow.height = 20;
     styleAll(totalRow, { font: boldFont, border: cellBorder, alignment: { vertical: "middle" } });
+    if (summary) {
+      ws.addRow([]).height = 8;
+      const hdr = ws.addRow(["AI Summary"]);
+      merge(hdr); hdr.height = 18;
+      styleAll(hdr, { fill: blueFill, font: whiteFont, border: cellBorder });
+      const sumRow = ws.addRow([summary]);
+      merge(sumRow); sumRow.height = 80;
+      sumRow.getCell(1).style = { font: baseFont, alignment: { wrapText: true, vertical: "top" }, border: cellBorder };
+    }
     return wb.xlsx.writeBuffer();
   }
 
   async function exportMonthXLSX(monthKey, weeks) {
     const days = [...weeks].flatMap((w) => w.days).sort((a, b) => a.date.localeCompare(b.date)).map(({ date, entries: dayEntries }) => ({ date, dayEntries }));
-    const buffer = await buildXLSX(days, formatMonthLabel(monthKey));
+    const buffer = await buildXLSX(days, formatMonthLabel(monthKey), monthSummaries[monthKey]?.text || "");
     const name = settings.name ? `${settings.name.toLowerCase().replace(/\s+/g, "_")}_` : "";
     downloadFile(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `${name}${monthKey}.xlsx`);
     flash(`✓ ${formatMonthLabel(monthKey)} exported`);
@@ -1054,6 +1063,14 @@ export function AppProvider({ session, children }) {
       return empty(boldFmt);
     })});
 
+    // ── AI Summary (if available) ──
+    const summary = monthSummaries[monthStr]?.text;
+    if (summary) {
+      rowData.push(blankRow());
+      rowData.push({ values: Array(numCols).fill(null).map((_, i) => i === 0 ? cell("AI Summary", blueFmt) : empty(blueFmt)) });
+      rowData.push({ values: [cell(summary, { textFormat: { fontSize: 11, fontFamily: "Arial" }, verticalAlignment: "TOP", wrapStrategy: "WRAP" }), ...Array(numCols - 1).fill(null).map(() => empty())] });
+    }
+
     // ── Create spreadsheet ──
     const res = await fetch("https://sheets.googleapis.com/v4/spreadsheets", {
       method: "POST",
@@ -1074,8 +1091,10 @@ export function AppProvider({ session, children }) {
     const spreadsheetId = created.spreadsheetId;
     const sheetId = created.sheets[0].properties.sheetId;
 
-    // ── batchUpdate: merge title, freeze header, set column widths ──
+    // ── batchUpdate: merge title + summary rows, freeze header, set column widths ──
     const colWidths = hasRate ? [160, 80, 80, 140, 70, 100, 100, 80, 120, 120, 260] : [160, 80, 80, 140, 70, 100, 80, 120, 260];
+    const summaryRowIndex = summary ? rowData.length - 1 : -1; // last row is the summary text row
+    const summaryHdrIndex = summary ? rowData.length - 2 : -1;
     fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
       method: "POST",
       headers: { "Authorization": `Bearer ${googleToken}`, "Content-Type": "application/json" },
@@ -1083,6 +1102,11 @@ export function AppProvider({ session, children }) {
         { mergeCells: { range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: numCols }, mergeType: "MERGE_ALL" } },
         { updateSheetProperties: { properties: { sheetId, gridProperties: { frozenRowCount: headerRowIndex + 1 } }, fields: "gridProperties.frozenRowCount" } },
         ...colWidths.map((pixelSize, i) => ({ updateDimensionProperties: { range: { sheetId, dimension: "COLUMNS", startIndex: i, endIndex: i + 1 }, properties: { pixelSize }, fields: "pixelSize" } })),
+        ...(summary ? [
+          { mergeCells: { range: { sheetId, startRowIndex: summaryHdrIndex, endRowIndex: summaryHdrIndex + 1, startColumnIndex: 0, endColumnIndex: numCols }, mergeType: "MERGE_ALL" } },
+          { mergeCells: { range: { sheetId, startRowIndex: summaryRowIndex, endRowIndex: summaryRowIndex + 1, startColumnIndex: 0, endColumnIndex: numCols }, mergeType: "MERGE_ALL" } },
+          { updateDimensionProperties: { range: { sheetId, dimension: "ROWS", startIndex: summaryRowIndex, endIndex: summaryRowIndex + 1 }, properties: { pixelSize: 120 }, fields: "pixelSize" } },
+        ] : []),
       ]}),
     }).catch(() => {}); // best-effort — sheet is already created
 

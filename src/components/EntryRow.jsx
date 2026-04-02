@@ -324,7 +324,7 @@ export default function EntryRow({ entry, index }) {
           className={`absolute top-0 h-full ${
             entry.billable !== false
               ? dark ? "bg-gradient-to-r from-cyan-500 to-teal-500" : "bg-gradient-to-r from-teal-500 to-emerald-500"
-              : dark ? "bg-gradient-to-r from-purple-500 to-pink-500" : "bg-gradient-to-r from-purple-400 to-pink-400"
+              : dark ? "bg-teal-900" : "bg-teal-800/70"
           }`}
           style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
         />
@@ -336,7 +336,7 @@ export default function EntryRow({ entry, index }) {
           return (
             <div
               key={i}
-              className={`absolute top-0 h-full ${dark ? "bg-orange-500/70" : "bg-orange-400/70"}`}
+              className={`absolute top-0 h-full ${dark ? "bg-cyan-300/40" : "bg-teal-200"}`}
               style={{ left: `${bLeft}%`, width: `${bWidth}%` }}
             />
           );

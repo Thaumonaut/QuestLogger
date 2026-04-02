@@ -278,7 +278,7 @@ export default function LogPage() {
                                                     className={`absolute top-0 h-full ${
                                                       entry.billable !== false
                                                         ? dark ? "bg-gradient-to-r from-cyan-500/80 to-teal-500/80" : "bg-gradient-to-r from-teal-500/80 to-emerald-500/80"
-                                                        : dark ? "bg-gradient-to-r from-purple-500/60 to-pink-500/60" : "bg-gradient-to-r from-purple-400/60 to-pink-400/60"
+                                                        : dark ? "bg-teal-900/90" : "bg-teal-800/70"
                                                     }`}
                                                     style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
                                                   />
@@ -290,7 +290,7 @@ export default function LogPage() {
                                                   const bWidth = Math.max(0, ((timeToHour(b.end) - timeToHour(b.start)) / 12) * 100);
                                                   return (
                                                     <div key={`${i}-${j}`}
-                                                      className={`absolute top-0 h-full ${dark ? "bg-orange-500/70" : "bg-orange-400/70"}`}
+                                                      className={`absolute top-0 h-full ${dark ? "bg-cyan-300/40" : "bg-teal-200"}`}
                                                       style={{ left: `${bLeft}%`, width: `${bWidth}%` }}
                                                     />
                                                   );
@@ -312,13 +312,13 @@ export default function LogPage() {
                                                   )}
                                                   {nonBillMins > 0 && (
                                                     <span className="flex items-center gap-1">
-                                                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dark ? "bg-purple-500" : "bg-purple-400"}`} />
+                                                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dark ? "bg-teal-900" : "bg-teal-800"}`} />
                                                       <span className={`text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{formatDuration(nonBillMins)}</span>
                                                     </span>
                                                   )}
                                                   {brkMins > 0 && (
                                                     <span className="flex items-center gap-1">
-                                                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dark ? "bg-orange-500" : "bg-orange-400"}`} />
+                                                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dark ? "bg-cyan-300" : "bg-teal-200"}`} />
                                                       <span className={`text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{brkMins}m break</span>
                                                     </span>
                                                   )}
