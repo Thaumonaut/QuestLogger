@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useApp } from "../context/AppContext";
 import { useTheme } from "../context/ThemeContext";
 import TimeSelect from "./TimeSelect";
-import { calcWorked, formatDuration, formatDecimal, todayStr, toDisplayTime, makeEmptyForm } from "../lib/utils";
+import { calcWorked, formatDuration, formatDecimal, todayStr, toDisplayTime, makeEmptyForm, currentTimeStr } from "../lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Calendar, Clock, Plus } from "lucide-react";
+import ProjectPicker from "./ProjectPicker";
 
 export default function LogHoursForm() {
   const {
@@ -15,14 +16,15 @@ export default function LogHoursForm() {
     handleSubmit, applyTemplate, templates, projects, settings,
     clockIn, handleClockIn, clockedElapsed, breakElapsed,
     updateClockIn, startClockBreak, endClockBreak,
-    clockOutAndFill, clockedTick, timeRounding,
+    clockOutAndFill, clockedTick, timeRounding, defaultEntryMode,
     logHoursRef, dateInputRef, deepseekKey, rewriteDescription, rewritingDesc,
     pendingEntry, updatePendingEntry, clearPendingEntry,
   } = useApp();
   const { theme } = useTheme();
   const dark = theme === "dark";
 
-  const [mode, setMode] = useState("manual");
+  const [mode, setMode] = useState(() => defaultEntryMode || "manual");
+  const [startTime, setStartTime] = useState(() => currentTimeStr());
 
   const manualDescRef = useRef(null);
   const clockDescRef = useRef(null);
@@ -43,6 +45,7 @@ export default function LogHoursForm() {
 
   useEffect(() => {
     if (clockIn || pendingEntry) setMode("auto");
+    if (!clockIn && !pendingEntry) setStartTime(currentTimeStr());
   }, [clockIn, pendingEntry]);
 
 
@@ -125,16 +128,30 @@ export default function LogHoursForm() {
                     {timeRounding !== "none" && ` Times will be rounded to ${timeRounding} min.`}
                   </p>
                 </div>
-                <Button
-                  onClick={handleClockIn}
-                  className={`px-8 py-2.5 rounded-xl text-sm font-semibold shadow-lg transition-all ${
-                    dark
-                      ? "bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:from-cyan-400 hover:to-teal-400"
-                      : "bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-teal-500/30 hover:from-teal-700 hover:to-emerald-700"
-                  }`}
-                >
-                  Clock In
-                </Button>
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col items-start gap-1">
+                    <label className={`text-xs font-medium uppercase tracking-wide ${dark ? "text-slate-500" : "text-slate-400"}`}>
+                      Started at
+                    </label>
+                    <TimeSelect
+                      value={startTime}
+                      onChange={setStartTime}
+                    />
+                  </div>
+                  <div className="flex flex-col items-start gap-1">
+                    <span className="text-xs invisible select-none">-</span>
+                    <Button
+                      onClick={() => handleClockIn(startTime)}
+                      className={`px-8 py-2.5 rounded-xl text-sm font-semibold shadow-lg transition-all ${
+                        dark
+                          ? "bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:from-cyan-400 hover:to-teal-400"
+                          : "bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-teal-500/30 hover:from-teal-700 hover:to-emerald-700"
+                      }`}
+                    >
+                      Clock In
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -213,23 +230,10 @@ export default function LogHoursForm() {
                           </button>
                         )}
                       </div>
-                      {projects.length > 0 && (
-                        <div className={`flex flex-wrap gap-2 p-3 rounded-lg border ${dark ? "bg-slate-900/50 border-slate-700/50" : "bg-white/80 border-slate-200"}`}>
-                          {projects.map((p) => {
-                            const selected = (clockIn.projectIds || []).includes(p.id);
-                            return (
-                              <button key={p.id} type="button"
-                                onClick={() => { const ids = clockIn.projectIds || []; updateClockIn({ projectIds: selected ? ids.filter((id) => id !== p.id) : [...ids, p.id] }); }}
-                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${selected ? "opacity-100" : "opacity-50 hover:opacity-75"}`}
-                                style={selected ? { backgroundColor: p.color + "22", color: p.color, borderColor: p.color + "66" } : { borderColor: dark ? "#475569" : "#e2e8f0", color: dark ? "#94a3b8" : "#64748b" }}
-                              >
-                                <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.color || "#14b8a6" }} />
-                                {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
+                      <ProjectPicker
+                        selectedIds={clockIn.projectIds || []}
+                        onChange={(ids) => updateClockIn({ projectIds: ids })}
+                      />
                       <label className="flex items-center gap-2 cursor-pointer mt-3">
                         <Checkbox id="clock-billable" checked={clockIn.billable !== false}
                           onCheckedChange={(v) => updateClockIn({ billable: !!v })}
@@ -320,23 +324,10 @@ export default function LogHoursForm() {
                         </button>
                       )}
                     </div>
-                    {projects.length > 0 && (
-                      <div className={`flex flex-wrap gap-2 p-3 rounded-lg border ${dark ? "bg-slate-900/50 border-slate-700/50" : "bg-white/80 border-slate-200"}`}>
-                        {projects.map((p) => {
-                          const selected = (pendingEntry.projectIds || []).includes(p.id);
-                          return (
-                            <button key={p.id} type="button"
-                              onClick={() => { const ids = pendingEntry.projectIds || []; updatePendingEntry({ projectIds: selected ? ids.filter((id) => id !== p.id) : [...ids, p.id] }); }}
-                              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${selected ? "opacity-100" : "opacity-50 hover:opacity-75"}`}
-                              style={selected ? { backgroundColor: p.color + "22", color: p.color, borderColor: p.color + "66" } : { borderColor: dark ? "#475569" : "#e2e8f0", color: dark ? "#94a3b8" : "#64748b" }}
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.color || "#14b8a6" }} />
-                              {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
+                    <ProjectPicker
+                      selectedIds={pendingEntry.projectIds || []}
+                      onChange={(ids) => updatePendingEntry({ projectIds: ids })}
+                    />
                     <label className="flex items-center gap-2 cursor-pointer">
                       <Checkbox id="pending-billable" checked={pendingEntry.billable !== false}
                         onCheckedChange={(v) => updatePendingEntry({ billable: !!v })}
@@ -481,28 +472,10 @@ export default function LogHoursForm() {
                     )}
                   </div>
 
-                  {projects.length > 0 && (
-                    <div className={`flex flex-wrap gap-2 p-3 rounded-lg border ${dark ? "bg-slate-900/50 border-slate-700/50" : "bg-white/80 border-slate-200"}`}>
-                      {projects.map((p) => {
-                        const selected = (form.projectIds || []).includes(p.id);
-                        return (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() => {
-                              const ids = form.projectIds || [];
-                              setField("projectIds", selected ? ids.filter((id) => id !== p.id) : [...ids, p.id]);
-                            }}
-                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${selected ? "opacity-100" : "opacity-50 hover:opacity-75"}`}
-                            style={selected ? { backgroundColor: p.color + "22", color: p.color, borderColor: p.color + "66" } : { borderColor: dark ? "#475569" : "#e2e8f0", color: dark ? "#94a3b8" : "#64748b" }}
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.color || "#14b8a6" }} />
-                            {p.name}{p.client_name ? ` · ${p.client_name}` : ""}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <ProjectPicker
+                    selectedIds={form.projectIds || []}
+                    onChange={(ids) => setField("projectIds", ids)}
+                  />
                 </div>
               </div>
             </div>

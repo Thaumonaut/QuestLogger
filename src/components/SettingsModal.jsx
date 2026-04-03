@@ -227,6 +227,15 @@ export default function SettingsModal() {
               </FieldRow>
 
               <p style={{ fontSize: 11, fontWeight: 600, color: "var(--color-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 20, marginBottom: 0 }}>Time tracking</p>
+              <FieldRow label="Default entry mode" hint="Which tab opens by default on the log form">
+                <Select value={draftSettings._defaultEntryMode || "manual"} onValueChange={(v) => setDraftSettings((d) => ({ ...d, _defaultEntryMode: v }))}>
+                  <SelectTrigger className={`${inputCls} h-10 w-36`}><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text)]">
+                    <SelectItem value="manual" className="focus:bg-[var(--color-accent-light)]">Manual</SelectItem>
+                    <SelectItem value="auto" className="focus:bg-[var(--color-accent-light)]">Automatic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FieldRow>
               <FieldRow label="Time rounding" hint="Applied on clock in (down) and clock out (up)">
                 <Select value={draftSettings._timeRounding || "none"} onValueChange={(v) => setDraftSettings((d) => ({ ...d, _timeRounding: v }))}>
                   <SelectTrigger className={`${inputCls} h-10 w-36`}><SelectValue /></SelectTrigger>

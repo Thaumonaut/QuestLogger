@@ -15,7 +15,7 @@ function timeToHour(t) {
 
 export default function LogPage() {
   const {
-    entries, grouped, loading, sortAsc, setSortAsc,
+    entries, grouped, projects, loading, sortAsc, setSortAsc,
     expandedDates, toggleExpanded, inlineEditId, cancelInlineEdit,
     showSettings, hourlyRate, deepseekKey, monthSummaries, setMonthSummaries,
     generateMonthSummary, exportMonthXLSX, exportToGoogleSheets, googleToken, googleTokenExpiry, flash,
@@ -272,30 +272,34 @@ export default function LogPage() {
                                                 const endH = timeToHour(entry.end);
                                                 const leftPct = Math.max(0, Math.min(100, ((startH - 8) / 12) * 100));
                                                 const widthPct = Math.max(0, Math.min(100 - leftPct, ((endH - startH) / 12) * 100));
+                                                const firstProject = projects.find((p) => (entry.project_ids || [])[0] === p.id);
+                                                const barColor = firstProject
+                                                  ? firstProject.color + (entry.billable !== false ? "cc" : "66")
+                                                  : entry.billable !== false
+                                                    ? dark ? "#06b6d4cc" : "#14b8a6cc"
+                                                    : dark ? "#134e4acc" : "#115e59cc";
                                                 return (
                                                   <div
                                                     key={i}
-                                                    className={`absolute top-0 h-full ${
-                                                      entry.billable !== false
-                                                        ? dark ? "bg-gradient-to-r from-cyan-500/80 to-teal-500/80" : "bg-gradient-to-r from-teal-500/80 to-emerald-500/80"
-                                                        : dark ? "bg-teal-900/90" : "bg-teal-800/70"
-                                                    }`}
-                                                    style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                                                    className="absolute top-0 h-full"
+                                                    style={{ left: `${leftPct}%`, width: `${widthPct}%`, background: barColor }}
                                                   />
                                                 );
                                               })}
-                                              {dayEntries.flatMap((entry, i) =>
-                                                (entry.breaks || []).filter((b) => b.unpaid).map((b, j) => {
+                                              {dayEntries.flatMap((entry, i) => {
+                                                const firstProject = projects.find((p) => (entry.project_ids || [])[0] === p.id);
+                                                const breakColor = firstProject ? firstProject.color + "44" : dark ? "#67e8f944" : "#99f6e4";
+                                                return (entry.breaks || []).filter((b) => b.unpaid).map((b, j) => {
                                                   const bLeft = Math.max(0, ((timeToHour(b.start) - 8) / 12) * 100);
                                                   const bWidth = Math.max(0, ((timeToHour(b.end) - timeToHour(b.start)) / 12) * 100);
                                                   return (
                                                     <div key={`${i}-${j}`}
-                                                      className={`absolute top-0 h-full ${dark ? "bg-cyan-300/40" : "bg-teal-200"}`}
-                                                      style={{ left: `${bLeft}%`, width: `${bWidth}%` }}
+                                                      className="absolute top-0 h-full"
+                                                      style={{ left: `${bLeft}%`, width: `${bWidth}%`, background: breakColor }}
                                                     />
                                                   );
-                                                })
-                                              )}
+                                                });
+                                              })}
                                             </div>
                                             {/* Breakdown summary */}
                                             {(() => {

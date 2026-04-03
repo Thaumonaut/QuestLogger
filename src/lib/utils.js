@@ -28,6 +28,7 @@ export function normalizeSettings(row) {
     timeRounding: row.time_rounding || "none",
     dailyTarget: row.daily_target ?? 0,
     weeklyTarget: row.weekly_target ?? 0,
+    defaultEntryMode: row.default_entry_mode || "manual",
   };
 }
 

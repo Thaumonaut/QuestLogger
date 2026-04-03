@@ -4,6 +4,7 @@ import { useTheme } from "../context/ThemeContext";
 import TimeSelect from "./TimeSelect";
 import { calcWorked, formatDuration, formatDecimal, toDisplayTime, unpaidBreakMins, formatMoney } from "../lib/utils";
 import { Edit2, Save, X, Trash2, Copy } from "lucide-react";
+import ProjectPicker from "./ProjectPicker";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -102,28 +103,10 @@ export default function EntryRow({ entry, index }) {
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
           <div className="flex-1 w-full">
-            {projects.length > 0 && (
-              <div className={`flex flex-wrap gap-2 p-3 rounded-lg border ${dark ? "bg-slate-900/50 border-slate-700/50" : "bg-white/80 border-slate-200"}`}>
-                {projects.map((p) => {
-                  const selected = (inlineForm.projectIds || []).includes(p.id);
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => {
-                        const ids = inlineForm.projectIds || [];
-                        setInlineField("projectIds", selected ? ids.filter((id) => id !== p.id) : [...ids, p.id]);
-                      }}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${selected ? "opacity-100" : "opacity-50 hover:opacity-75"}`}
-                      style={selected ? { backgroundColor: p.color + "22", color: p.color, borderColor: p.color + "66" } : { borderColor: dark ? "#475569" : "#e2e8f0", color: dark ? "#94a3b8" : "#64748b" }}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.color || "#14b8a6" }} />
-                      {p.name}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            <ProjectPicker
+              selectedIds={inlineForm.projectIds || []}
+              onChange={(ids) => setInlineField("projectIds", ids)}
+            />
           </div>
           <div className="flex items-center gap-2">
             <Checkbox
@@ -320,27 +303,36 @@ export default function EntryRow({ entry, index }) {
       </div>
 
       <div className={`absolute bottom-0 left-0 right-0 h-1 sm:h-1.5 ${dark ? "bg-slate-800/50" : "bg-slate-200/50"}`}>
-        <div
-          className={`absolute top-0 h-full ${
-            entry.billable !== false
-              ? dark ? "bg-gradient-to-r from-cyan-500 to-teal-500" : "bg-gradient-to-r from-teal-500 to-emerald-500"
-              : dark ? "bg-teal-900" : "bg-teal-800/70"
-          }`}
-          style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-        />
-        {(entry.breaks || []).filter((b) => b.unpaid).map((b, i) => {
-          const bStart = timeToHour(b.start);
-          const bEnd = timeToHour(b.end);
-          const bLeft = Math.max(0, ((bStart - 8) / 12) * 100);
-          const bWidth = Math.max(0, ((bEnd - bStart) / 12) * 100);
+        {(() => {
+          const projectColor = entryProjects[0]?.color;
+          const barColor = projectColor
+            ? projectColor + (entry.billable !== false ? "cc" : "66")
+            : entry.billable !== false
+              ? dark ? "#06b6d4" : "#14b8a6"
+              : dark ? "#134e4a" : "#115e59";
+          const breakColor = projectColor ? projectColor + "44" : dark ? "#67e8f9" : "#99f6e4";
           return (
-            <div
-              key={i}
-              className={`absolute top-0 h-full ${dark ? "bg-cyan-300/40" : "bg-teal-200"}`}
-              style={{ left: `${bLeft}%`, width: `${bWidth}%` }}
-            />
+            <>
+              <div
+                className="absolute top-0 h-full"
+                style={{ left: `${leftPct}%`, width: `${widthPct}%`, background: barColor }}
+              />
+              {(entry.breaks || []).filter((b) => b.unpaid).map((b, i) => {
+                const bStart = timeToHour(b.start);
+                const bEnd = timeToHour(b.end);
+                const bLeft = Math.max(0, ((bStart - 8) / 12) * 100);
+                const bWidth = Math.max(0, ((bEnd - bStart) / 12) * 100);
+                return (
+                  <div
+                    key={i}
+                    className="absolute top-0 h-full"
+                    style={{ left: `${bLeft}%`, width: `${bWidth}%`, background: breakColor }}
+                  />
+                );
+              })}
+            </>
           );
-        })}
+        })()}
       </div>
     </div>
   );

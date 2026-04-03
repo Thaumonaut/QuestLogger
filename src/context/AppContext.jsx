@@ -22,6 +22,7 @@ export function AppProvider({ session, children }) {
   const [timeRounding, setTimeRounding] = useState("none");
   const [dailyTarget, setDailyTarget] = useState(0);
   const [weeklyTarget, setWeeklyTarget] = useState(0);
+  const [defaultEntryMode, setDefaultEntryMode] = useState("manual");
 
   // ── UI state ─────────────────────────────────────────────────
   const [form, setForm] = useState(() => makeEmptyForm());
@@ -107,6 +108,7 @@ export function AppProvider({ session, children }) {
       setTimeRounding(settingsRes.data?.time_rounding || "none");
       setDailyTarget(settingsRes.data?.daily_target ?? 0);
       setWeeklyTarget(settingsRes.data?.weekly_target ?? 0);
+      setDefaultEntryMode(settingsRes.data?.default_entry_mode || "manual");
       // Prefer provider_token from OAuth redirect over stale DB value
       if (session?.provider_token) {
         const expiry = Date.now() + 3500 * 1000;
@@ -232,9 +234,9 @@ export function AppProvider({ session, children }) {
   }, [clockIn]);
 
   // ── Clock in/out ─────────────────────────────────────────────
-  function handleClockIn() {
-    const raw = currentTimeStr();
-    const start = roundTimeStr(raw, timeRounding, "down");
+  function handleClockIn(startOverride) {
+    const raw = startOverride || currentTimeStr();
+    const start = roundTimeStr(raw, timeRounding, startOverride ? "nearest" : "down");
     const data = { start, date: todayStr(), description: "", projectIds: [], billable: true, breaks: [], activeBreak: null };
     localStorage.setItem("ql_clock_in", JSON.stringify(data));
     setClockIn(data);
@@ -415,7 +417,7 @@ export function AppProvider({ session, children }) {
 
   // ── Settings modal ───────────────────────────────────────────
   function openSettings() {
-    setDraftSettings({ ...settings, hourlyRate: hourlyRate || "", _deepseekKey: deepseekKey, _reminderTime: reminderTime, _timeRounding: timeRounding, dailyTarget: dailyTarget || "", weeklyTarget: weeklyTarget || "" });
+    setDraftSettings({ ...settings, hourlyRate: hourlyRate || "", _deepseekKey: deepseekKey, _reminderTime: reminderTime, _timeRounding: timeRounding, dailyTarget: dailyTarget || "", weeklyTarget: weeklyTarget || "", _defaultEntryMode: defaultEntryMode });
     setDraftTemplates(templates.map((t) => ({ ...t, breaks: [...(t.breaks || [])] })));
     setDraftProjects(projects.map((p) => ({ ...p })));
     setDraftNewTemplate(null);
@@ -427,13 +429,14 @@ export function AppProvider({ session, children }) {
   }
 
   async function saveSettings() {
-    const { hourlyRate: draftRate, _deepseekKey: draftKey, _reminderTime: draftReminder, _timeRounding: draftRounding, dailyTarget: draftDaily, weeklyTarget: draftWeekly, ...rest } = draftSettings;
+    const { hourlyRate: draftRate, _deepseekKey: draftKey, _reminderTime: draftReminder, _timeRounding: draftRounding, dailyTarget: draftDaily, weeklyTarget: draftWeekly, _defaultEntryMode: draftEntryMode, ...rest } = draftSettings;
     const rate = parseFloat(draftRate) || 0;
     const key = (draftKey || "").trim();
     const reminder = draftReminder || null;
     const rounding = draftRounding || "none";
     const daily = parseFloat(draftDaily) || 0;
     const weekly = parseFloat(draftWeekly) || 0;
+    const entryMode = draftEntryMode || "manual";
 
     // Sync templates
     const existingUUIDs = templates.map((t) => t.id).filter(isUUID);
@@ -488,6 +491,7 @@ export function AppProvider({ session, children }) {
       time_rounding: rounding,
       daily_target: daily,
       weekly_target: weekly,
+      default_entry_mode: entryMode,
       updated_at: new Date().toISOString(),
     });
 
@@ -499,6 +503,7 @@ export function AppProvider({ session, children }) {
     setTimeRounding(rounding);
     setDailyTarget(daily);
     setWeeklyTarget(weekly);
+    setDefaultEntryMode(entryMode);
     setShowSettings(false);
   }
 
@@ -1114,10 +1119,25 @@ export function AppProvider({ session, children }) {
     flash("✓ Opened in Google Sheets");
   }
 
+  async function addProjectQuick(name, color = "#14b8a6") {
+    if (!session?.user?.id || !name.trim()) return null;
+    const { data } = await supabase.from("projects").insert({
+      user_id: session.user.id,
+      name: name.trim(),
+      client_name: "",
+      color,
+    }).select().single();
+    if (data) {
+      setProjects((prev) => [...prev, data]);
+      return data;
+    }
+    return null;
+  }
+
   const value = {
     // data
     session, entries, projects, settings, templates, loading,
-    hourlyRate, deepseekKey, reminderTime, timeRounding, dailyTarget, weeklyTarget,
+    hourlyRate, deepseekKey, reminderTime, timeRounding, dailyTarget, weeklyTarget, defaultEntryMode,
     // ui
     form, setForm, exportMsg, flash,
     localImportBanner, setLocalImportBanner,
@@ -1155,6 +1175,8 @@ export function AppProvider({ session, children }) {
     showInvoice, setShowInvoice,
     // computed
     todayMins, grouped,
+    // projects
+    addProjectQuick,
     // google sheets
     googleToken, googleTokenExpiry, connectGoogleSheets, disconnectGoogleSheets, exportToGoogleSheets,
     // export/import
