@@ -574,6 +574,25 @@ export function AppProvider({ session, children }) {
     return data.choices[0].message.content.trim();
   }
 
+  /** Returns actionable step titles, or null if AI is unavailable / failed. */
+  async function breakdownPlannerTask(rawTitle) {
+    const title = (rawTitle || "").trim();
+    if (!title || !deepseekKey) return null;
+    try {
+      const result = await callDeepSeek(
+        "You help people with ADHD break work into tiny, concrete actions. Reply with one action per line only — no numbering, bullets, or extra commentary. Max 8 lines. Each line under 80 characters.",
+        `Break this into small next steps:\n${title}`,
+      );
+      const lines = result
+        .split(/\n/)
+        .map((l) => l.replace(/^\s*\d+[\).\s]+/, "").replace(/^\s*[-*•]\s*/, "").trim())
+        .filter(Boolean);
+      return lines.length ? lines.slice(0, 10) : null;
+    } catch {
+      return null;
+    }
+  }
+
   async function rewriteDescription(text, setter) {
     const src = text !== undefined ? text : form.description;
     const set = setter || ((v) => setField("description", v));
@@ -1171,6 +1190,7 @@ export function AppProvider({ session, children }) {
     // ai
     rewritingDesc, rewriteDescription,
     monthSummaries, setMonthSummaries, generateMonthSummary,
+    breakdownPlannerTask,
     // invoice
     showInvoice, setShowInvoice,
     // computed

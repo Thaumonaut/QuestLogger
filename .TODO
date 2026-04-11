@@ -24,3 +24,6 @@
 - ✅ Keyboard shortcuts — N jumps to Log Hours form, Esc cancels inline edit
 - ✅ Refactor code to break it into smaller, more manageable components
 - ✅ Dark mode
+
+
+- Set Preferred entry method between auto or manual so it will always use the user's preferred method

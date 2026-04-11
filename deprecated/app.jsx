@@ -499,7 +499,7 @@ export default function App() {
                   lineHeight: 1,
                 }}
               >
-                {settings.name ? `${settings.name}'s WorkLog` : "WorkLog"}
+                {settings.name ? `${settings.name}'s Quest Log` : "Quest Log"}
               </p>
               <p
                 style={{

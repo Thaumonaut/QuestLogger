@@ -10,6 +10,7 @@ import InvoiceModal from "./components/InvoiceModal";
 import ClockBanner from "./components/ClockBanner";
 import LogPage from "./pages/LogPage";
 import OverviewPage from "./pages/OverviewPage";
+import PlannerPage from "./pages/PlannerPage";
 
 function AppLayout({ session }) {
   const { theme } = useTheme();
@@ -52,6 +53,7 @@ function AppLayout({ session }) {
           <Routes>
             <Route path="/" element={<LogPage />} />
             <Route path="/overview" element={<OverviewPage />} />
+            <Route path="/planner" element={<PlannerPage />} />
           </Routes>
         </div>
       </div>

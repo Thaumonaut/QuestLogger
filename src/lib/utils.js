@@ -130,6 +130,17 @@ export function todayStr() {
   return localStr(new Date());
 }
 
+/** YYYY-MM-DD, `deltaDays` from `dateStr` (local calendar). */
+export function offsetDateStr(dateStr, deltaDays) {
+  const d = new Date(dateStr + "T12:00:00");
+  d.setDate(d.getDate() + deltaDays);
+  return localStr(d);
+}
+
+export function tomorrowStr() {
+  return offsetDateStr(todayStr(), 1);
+}
+
 export function weekStart(dateStr) {
   const d = new Date(dateStr + "T12:00:00");
   d.setDate(d.getDate() - d.getDay());
