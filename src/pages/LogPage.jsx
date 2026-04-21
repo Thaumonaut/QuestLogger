@@ -15,7 +15,7 @@ function timeToHour(t) {
 
 export default function LogPage() {
   const {
-    entries, grouped, projects, loading, sortAsc, setSortAsc,
+    entries, grouped, projects, sortAsc, setSortAsc,
     expandedDates, toggleExpanded, inlineEditId, cancelInlineEdit,
     showSettings, hourlyRate, deepseekKey, monthSummaries, setMonthSummaries,
     generateMonthSummary, exportMonthXLSX, exportToGoogleSheets, googleToken, googleTokenExpiry, flash,
@@ -58,14 +58,6 @@ export default function LogPage() {
 
   function toggleWeek(key) {
     setExpandedWeeks((s) => { const n = new Set(s); n.has(key) ? n.delete(key) : n.add(key); return n; });
-  }
-
-  if (loading) {
-    return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 300 }}>
-        <span style={{ fontSize: 13, color: "var(--color-muted)" }}>Loading…</span>
-      </div>
-    );
   }
 
   return (

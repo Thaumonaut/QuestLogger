@@ -15,7 +15,8 @@ export function AppProvider({ session, children }) {
   const [projects, setProjects] = useState([]);
   const [settings, setSettings] = useState({});
   const [templates, setTemplates] = useState([]);
-  const [loading, setLoading] = useState(true);
+  /** True while main Supabase data fetch is in flight — non-blocking; use for subtle UI only. */
+  const [dataSyncing, setDataSyncing] = useState(false);
   const [hourlyRate, setHourlyRate] = useState(0);
   const [deepseekKey, setDeepseekKey] = useState("");
   const [reminderTime, setReminderTime] = useState("");
@@ -77,60 +78,63 @@ export function AppProvider({ session, children }) {
   useEffect(() => {
     if (!session) return;
     async function loadData() {
-      setLoading(true);
-      const [entriesRes, templatesRes, settingsRes, projectsRes] = await Promise.all([
-        supabase.from("entries").select("*").order("date", { ascending: false }),
-        supabase.from("templates").select("*").order("created_at"),
-        supabase.from("user_settings").select("*").single(),
-        supabase.from("projects").select("*").order("created_at"),
-      ]);
-      // Sync clock-in state from DB (handles cross-device tracking).
-      // Only override local state if DB has an active session; if DB is null
-      // it might just mean this device hasn't synced yet — visibilitychange
-      // handles the "stopped on another device" case after initial load.
-      const dbClock = settingsRes.data?.active_clock ?? null;
-      if (dbClock && !dbClock.stopped) {
-        clockInFromDBRef.current = true;
-        setClockIn(dbClock);
-        localStorage.setItem("ql_clock_in", JSON.stringify(dbClock));
-      }
-      const loadedTemplates = (templatesRes.data ?? []).map(normalizeTemplate);
-      const loadedSettings = settingsRes.data ? normalizeSettings(settingsRes.data) : {};
-      const loadedEntries = (entriesRes.data ?? []).map(normalizeEntry);
-      const loadedProjects = projectsRes.data ?? [];
-      setTemplates(loadedTemplates);
-      setSettings(loadedSettings);
-      setEntries(loadedEntries);
-      setProjects(loadedProjects);
-      setHourlyRate(settingsRes.data?.hourly_rate ?? 0);
-      setDeepseekKey(settingsRes.data?.deepseek_key ?? "");
-      setReminderTime(normalizeTime(settingsRes.data?.reminder_time ?? ""));
-      setTimeRounding(settingsRes.data?.time_rounding || "none");
-      setDailyTarget(settingsRes.data?.daily_target ?? 0);
-      setWeeklyTarget(settingsRes.data?.weekly_target ?? 0);
-      setDefaultEntryMode(settingsRes.data?.default_entry_mode || "manual");
-      // Prefer provider_token from OAuth redirect over stale DB value
-      if (session?.provider_token) {
-        const expiry = Date.now() + 3500 * 1000;
-        setGoogleToken(session.provider_token);
-        setGoogleTokenExpiry(expiry);
-        await supabase.from("user_settings").upsert({
-          user_id: session.user.id,
-          google_access_token: session.provider_token,
-          google_token_expiry: expiry,
-        });
-      } else {
-        setGoogleToken(settingsRes.data?.google_access_token ?? null);
-        setGoogleTokenExpiry(settingsRes.data?.google_token_expiry ?? 0);
-      }
-      setForm(makeEmptyForm(loadedSettings, loadedTemplates));
-      setLoading(false);
+      setDataSyncing(true);
       try {
-        const oldEntries = JSON.parse(localStorage.getItem("worklog_entries_v2") || "[]");
-        if (oldEntries.length > 0 && (entriesRes.data ?? []).length === 0) {
-          setLocalImportBanner({ count: oldEntries.length });
+        const [entriesRes, templatesRes, settingsRes, projectsRes] = await Promise.all([
+          supabase.from("entries").select("*").order("date", { ascending: false }),
+          supabase.from("templates").select("*").order("created_at"),
+          supabase.from("user_settings").select("*").single(),
+          supabase.from("projects").select("*").order("created_at"),
+        ]);
+        // Sync clock-in state from DB (handles cross-device tracking).
+        // Only override local state if DB has an active session; if DB is null
+        // it might just mean this device hasn't synced yet — visibilitychange
+        // handles the "stopped on another device" case after initial load.
+        const dbClock = settingsRes.data?.active_clock ?? null;
+        if (dbClock && !dbClock.stopped) {
+          clockInFromDBRef.current = true;
+          setClockIn(dbClock);
+          localStorage.setItem("ql_clock_in", JSON.stringify(dbClock));
         }
-      } catch {}
+        const loadedTemplates = (templatesRes.data ?? []).map(normalizeTemplate);
+        const loadedSettings = settingsRes.data ? normalizeSettings(settingsRes.data) : {};
+        const loadedEntries = (entriesRes.data ?? []).map(normalizeEntry);
+        const loadedProjects = projectsRes.data ?? [];
+        setTemplates(loadedTemplates);
+        setSettings(loadedSettings);
+        setEntries(loadedEntries);
+        setProjects(loadedProjects);
+        setHourlyRate(settingsRes.data?.hourly_rate ?? 0);
+        setDeepseekKey(settingsRes.data?.deepseek_key ?? "");
+        setReminderTime(normalizeTime(settingsRes.data?.reminder_time ?? ""));
+        setTimeRounding(settingsRes.data?.time_rounding || "none");
+        setDailyTarget(settingsRes.data?.daily_target ?? 0);
+        setWeeklyTarget(settingsRes.data?.weekly_target ?? 0);
+        setDefaultEntryMode(settingsRes.data?.default_entry_mode || "manual");
+        // Prefer provider_token from OAuth redirect over stale DB value
+        if (session?.provider_token) {
+          const expiry = Date.now() + 3500 * 1000;
+          setGoogleToken(session.provider_token);
+          setGoogleTokenExpiry(expiry);
+          await supabase.from("user_settings").upsert({
+            user_id: session.user.id,
+            google_access_token: session.provider_token,
+            google_token_expiry: expiry,
+          });
+        } else {
+          setGoogleToken(settingsRes.data?.google_access_token ?? null);
+          setGoogleTokenExpiry(settingsRes.data?.google_token_expiry ?? 0);
+        }
+        setForm(makeEmptyForm(loadedSettings, loadedTemplates));
+        try {
+          const oldEntries = JSON.parse(localStorage.getItem("worklog_entries_v2") || "[]");
+          if (oldEntries.length > 0 && (entriesRes.data ?? []).length === 0) {
+            setLocalImportBanner({ count: oldEntries.length });
+          }
+        } catch { /* ignore */ }
+      } finally {
+        setDataSyncing(false);
+      }
     }
     loadData();
   }, [session?.user?.id]);
@@ -575,13 +579,13 @@ export function AppProvider({ session, children }) {
   }
 
   /** Returns actionable step titles, or null if AI is unavailable / failed. */
-  async function breakdownPlannerTask(rawTitle) {
-    const title = (rawTitle || "").trim();
-    if (!title || !deepseekKey) return null;
+  async function breakdownPlannerTask(description) {
+    const text = (description || "").trim();
+    if (!text || !deepseekKey) return null;
     try {
       const result = await callDeepSeek(
         "You help people with ADHD break work into tiny, concrete actions. Reply with one action per line only — no numbering, bullets, or extra commentary. Max 8 lines. Each line under 80 characters.",
-        `Break this into small next steps:\n${title}`,
+        `The user described this task or goal. Break it into small, ordered next steps they could add to a daily task list:\n\n${text}`,
       );
       const lines = result
         .split(/\n/)
@@ -1155,7 +1159,7 @@ export function AppProvider({ session, children }) {
 
   const value = {
     // data
-    session, entries, projects, settings, templates, loading,
+    session, entries, projects, settings, templates, dataSyncing,
     hourlyRate, deepseekKey, reminderTime, timeRounding, dailyTarget, weeklyTarget, defaultEntryMode,
     // ui
     form, setForm, exportMsg, flash,

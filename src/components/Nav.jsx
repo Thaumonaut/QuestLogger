@@ -3,10 +3,10 @@ import { useApp } from "../context/AppContext";
 import { useTheme } from "../context/ThemeContext";
 import { supabase } from "../supabase";
 import { formatDuration } from "../lib/utils";
-import { Sun, Moon, LogOut } from "lucide-react";
+import { Sun, Moon, LogOut, Loader2 } from "lucide-react";
 
 export default function Nav() {
-  const { settings, todayMins, exportMsg, openSettings } = useApp();
+  const { settings, todayMins, exportMsg, dataSyncing, openSettings } = useApp();
   const { theme, toggleTheme } = useTheme();
   const darkMode = theme === "dark";
 
@@ -28,6 +28,7 @@ export default function Nav() {
   }`;
 
   return (
+    <>
     <header
       className={`sticky top-0 z-50 border-b transition-all ${
         darkMode
@@ -35,6 +36,20 @@ export default function Nav() {
           : "bg-white/60 backdrop-blur-xl border-blue-200/50 shadow-sm"
       }`}
     >
+      {dataSyncing && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`flex items-center justify-center gap-2 px-4 py-1.5 text-[11px] font-medium border-b ${
+            darkMode
+              ? "border-cyan-500/15 bg-cyan-500/5 text-cyan-300/95"
+              : "border-teal-200/60 bg-teal-50/80 text-teal-900"
+          }`}
+        >
+          <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin opacity-90" aria-hidden />
+          Syncing your data…
+        </div>
+      )}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 h-auto sm:h-16 py-3 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
         <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
           <img
@@ -125,5 +140,18 @@ export default function Nav() {
         </div>
       </div>
     </header>
+    {exportMsg ? (
+      <div
+        role="status"
+        className={`fixed bottom-5 left-1/2 z-[100] max-w-[min(92vw,28rem)] -translate-x-1/2 rounded-lg border px-4 py-2.5 text-sm shadow-lg ${
+          darkMode
+            ? "border-slate-600 bg-slate-800 text-slate-100 shadow-black/40"
+            : "border-slate-200 bg-white text-slate-900 shadow-slate-900/10"
+        }`}
+      >
+        {exportMsg}
+      </div>
+    ) : null}
+    </>
   );
 }

@@ -32,7 +32,6 @@ import EarningsCard from "../components/EarningsCard";
 export default function OverviewPage() {
   const {
     entries,
-    loading,
     hourlyRate,
     projects,
     dailyTarget,
@@ -128,14 +127,6 @@ export default function OverviewPage() {
     color: dark ? "#ffffff" : "#1e293b",
     fontSize: "12px",
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <span className="text-sm text-slate-500">Loading…</span>
-      </div>
-    );
-  }
 
   const statCardClasses = `relative rounded-xl border p-5 sm:p-6 overflow-hidden transition-all shadow-sm`;
 
