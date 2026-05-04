@@ -8,6 +8,7 @@ import Nav from "./components/Nav";
 import SettingsModal from "./components/SettingsModal";
 import InvoiceModal from "./components/InvoiceModal";
 import ClockBanner from "./components/ClockBanner";
+import PomodoroTimer from "./components/PomodoroTimer";
 import LogPage from "./pages/LogPage";
 import OverviewPage from "./pages/OverviewPage";
 import PlannerPage from "./pages/PlannerPage";
@@ -15,6 +16,7 @@ import PlannerPage from "./pages/PlannerPage";
 function AppLayout({ session }) {
   const { theme } = useTheme();
   const darkMode = theme === "dark";
+  const [showPomodoro, setShowPomodoro] = useState(false);
 
   return (
     <div className={darkMode ? 'dark' : ''}>
@@ -46,10 +48,15 @@ function AppLayout({ session }) {
 
         {/* App content */}
         <div className="relative z-10 min-h-screen">
-          <Nav />
+          <Nav onOpenPomodoro={() => setShowPomodoro(true)} />
           <SettingsModal />
           <InvoiceModal />
           <ClockBanner />
+          <PomodoroTimer
+            open={showPomodoro}
+            onClose={() => setShowPomodoro(false)}
+            userId={session.user.id}
+          />
           <Routes>
             <Route path="/" element={<LogPage />} />
             <Route path="/overview" element={<OverviewPage />} />

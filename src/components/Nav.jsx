@@ -3,9 +3,9 @@ import { useApp } from "../context/AppContext";
 import { useTheme } from "../context/ThemeContext";
 import { supabase } from "../supabase";
 import { formatDuration } from "../lib/utils";
-import { Sun, Moon, LogOut, Loader2 } from "lucide-react";
+import { Sun, Moon, LogOut, Loader2, Timer } from "lucide-react";
 
-export default function Nav() {
+export default function Nav({ onOpenPomodoro }) {
   const { settings, todayMins, exportMsg, dataSyncing, openSettings } = useApp();
   const { theme, toggleTheme } = useTheme();
   const darkMode = theme === "dark";
@@ -100,6 +100,20 @@ export default function Nav() {
           </nav>
 
           <div className="flex items-center gap-2">
+            {/* Pomodoro Timer */}
+            <button
+              onClick={onOpenPomodoro}
+              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                darkMode
+                  ? "text-slate-400 hover:text-slate-300 hover:bg-slate-800/50"
+                  : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
+              }`}
+              title="Pomodoro timer"
+            >
+              <Timer className="w-4 h-4" />
+              <span>Pomodoro</span>
+            </button>
+
             {/* Desktop Theme Toggle */}
             <button
               onClick={toggleTheme}
